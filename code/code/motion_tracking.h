@@ -1,0 +1,4 @@
+#ifndef MOTION_TRACKING_H
+#define MOTION_TRACKING_H
+
+#endif
