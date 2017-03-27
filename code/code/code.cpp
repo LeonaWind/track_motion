@@ -5,122 +5,65 @@
 #include <cxcore.h>
 using namespace cv;
 using namespace std;
-Mat image;
-bool backprojMode = false;
-bool selectObject = false;
-int trackObject = 0;
-bool showHist = true;
-Point origin;
-Rect selection;
-int vmin = 10, vmax = 256, smin = 30;
-vector<Point2f> points1;
-vector<Point2f> points2;
-vector<Point2f> initial;
-vector<uchar> status; // 跟踪特征的状态，特征的流发现为1，否则为0
-vector<float> err;
-bool addNewPoints();
-bool acceptTrackedPoint(int i);
+
 const char* keys =
 {
-       "{1|  | 0 | camera number}"
+	"{1|  | 0 | camera number}"
 };
+
 int main( int argc, const char** argv )
 {
-       VideoCapture cap;
-       Rect trackWindow;
-       int hsize = 16;
-       float hranges[] = {0,180};
-       const float* phranges = hranges;
-       CommandLineParser parser(argc, argv, keys);
-       int camNum = parser.get<int>("0");
-       cap.open(camNum);
-       if( !cap.isOpened() )
-       {
-              cout << "***Could not initialize capturing...***\n";
-              cout << "Current parameter's value: \n";
-              parser.printParams();
-              return -1;
-       }
-       Mat frame, hsv, hue, mask, hist, histimg = Mat::zeros(200, 320, CV_8UC3), backproj;
-       bool paused = false;
-       Mat gray;
-       int minDis =10;
-       initial.resize(1);
-       for(;;)
-       {
-              cap >> frame;//读入一帧图像
-              if( !frame.empty() )
-              {
-                     frame.copyTo(image);
-                     if( !paused )
-                     {
-                           //角点检测
-                           cvtColor(image,gray,CV_BGR2GRAY);//变为灰度图
-                           std::vector<Point2f> corner;
-                            goodFeaturesToTrack(gray,corner,500,0.04,minDis,Mat(),3,false,0);
-                           for(int i=0;i<corner.size();i++){
-                                  circle(image,Point(corner.at(i).x,corner.at(i).y),3,Scalar(255,255,0));
-                           }
-                           imshow( "CamShift Demo", image );
-                           Mat frame2,gray2;
-                           cap >> frame2;//读入第二帧图像
-                           if( !frame.empty() )
-                           {
-                                  cvtColor(frame2,gray2,CV_BGR2GRAY);//变为灰度图
-                                  // 添加特征点
-                                  if (addNewPoints())
-                                  {
-                                         points1.insert(points1.end(), corner.begin(), corner.end());
-                                         initial.insert(initial.end(), corner.begin(), corner.end());
-                                  }
-                                  calcOpticalFlowPyrLK (gray, gray2, points1, points2, status, err); //光流检测
-                                  // 去掉一些不好的特征点
-                                  int k = 0;
-                                  for (size_t i=0; i<points2.size(); i++)
-                                  {
-                                         if (acceptTrackedPoint(i))
-                                         {
-                                                initial[k] = initial[i];
-                                                points2[k++] = points2[i];
-                                         }
-                                  }
-                                  points2.resize(k);
-                                  initial.resize(k);
-                                  points1.resize(k);
-                                  // 显示特征点和运动轨迹
-                                  for (size_t i=0; i<points2.size(); i++)
-                                  {
-                                         line(frame2, initial[i], points2[i], Scalar(0, 0, 255));
-                                         circle(frame2, points2[i], 3, Scalar(0, 255, 0), -1);
-                                  }
-                                  imshow("KL", frame2);
-                           }
-                     }
-                     //读取键盘输入操作
-                     char c = (char)waitKey(10);
-                     if( c == 27 )
-                           break;
-              }
-       }
-       return 0;
-}
-//-------------------------------------------------------------------------------------------------
-// function: addNewPoints
-// brief: 检测新点是否应该被添加
-// parameter:
-// return: 是否被添加标志
-//-------------------------------------------------------------------------------------------------
-bool addNewPoints()
-{
-       return points1.size() <= 10;
-}
-//-------------------------------------------------------------------------------------------------
-// function: acceptTrackedPoint
-// brief: 决定哪些跟踪点被接受
-// parameter:
-// return:
-//-------------------------------------------------------------------------------------------------
-bool acceptTrackedPoint(int i)
-{
-       return status[i] && ((abs(points1[i].x - points2[i].x) + abs(points1[i].y - points2[i].y)) > 2);
+	VideoCapture capture;//打开摄像头
+	Rect trackWindow;//跟踪的区域
+	CommandLineParser parser(argc, argv, keys);
+	int camNum = parser.get<int>("0");
+	capture.open(camNum);
+
+	if( !capture.isOpened() )
+	{
+		cout << "***Could not initialize capturing...***\n";
+		cout << "Current parameter's value: \n";
+		parser.printParams();
+		return -1;
+	}
+
+	Mat pre_frame, cur_frame;//读取的帧
+	Mat pre_gray,cur_gray;
+	int nFrmNum = 0;//读取的帧数
+	bool paused = false;
+	Mat image,background_image;//当前处理图像，背景图
+	Mat image_gray,background_gray;//当前处理图像，背景图的灰度图
+
+
+	while(1)
+	{
+		capture >> pre_frame;//读入一帧图像
+		if( !pre_frame.empty() )
+		{
+			nFrmNum++;
+			pre_frame.copyTo(image);
+			//如果是第一帧，需要申请内存，并初始化    
+			if(nFrmNum == 1) { 
+				image.copyTo(background_image);
+				//转化成单通道图像再处理  
+				cvtColor(image, background_gray, CV_BGR2GRAY);  
+				cvtColor(image, image_gray, CV_BGR2GRAY);  
+			}else{
+				cvtColor(image, image_gray, CV_BGR2GRAY);//变为灰度图 
+				GaussianBlur(image, image, cv::Size(0,0), 3, 0, 0);//先做高斯滤波，以平滑图像 
+				absdiff(image, background_gray, image_gray);//当前帧跟背景图相减  
+				threshold(background_gray, image_gray, 10, 255.0, CV_THRESH_BINARY);//二值化前景图
+				//cvRunningAvg(image, background_image, 0.003, 0);//更新背景  
+				  
+				imshow("background", background_image);  
+				imshow("foreground", image);  
+			}
+			
+			//读取键盘输入操作
+			char c = (char)waitKey(10);
+			if( c == 27 )
+				break;
+		}
+	}
+	return 0;
 }
