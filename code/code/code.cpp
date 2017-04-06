@@ -3,6 +3,9 @@
 #include <stdlib.h>
 #include <iomanip>
 #include <cxcore.h>
+#include"motion_detection.h"
+#include"motion_tracking.h"
+
 using namespace cv;
 using namespace std;
 
@@ -31,6 +34,7 @@ int main( int argc, const char** argv )
 	Mat pre_gray,cur_gray;
 	int nFrmNum = 0;//读取的帧数
 	bool paused = false;
+	bool get_background_flag = false;//是否为第一帧图像
 	Mat image,background_image;//当前处理图像，背景图
 	Mat image_gray,background_gray;//当前处理图像，背景图的灰度图
 
@@ -40,30 +44,31 @@ int main( int argc, const char** argv )
 		capture >> pre_frame;//读入一帧图像
 		if( !pre_frame.empty() )
 		{
-			nFrmNum++;
 			pre_frame.copyTo(image);
 			//如果是第一帧，需要申请内存，并初始化    
-			if(nFrmNum == 1) { 
-				image.copyTo(background_image);
+			if(get_background_flag == false) { 
 				//转化成单通道图像再处理  
 				cvtColor(image, background_gray, CV_BGR2GRAY);  
-				cvtColor(image, image_gray, CV_BGR2GRAY);  
+				cvtColor(image, image_gray, CV_BGR2GRAY); 
+				get_background_flag = true;
 			}else{
 				cvtColor(image, image_gray, CV_BGR2GRAY);//变为灰度图 
-				GaussianBlur(image, image, cv::Size(0,0), 3, 0, 0);//先做高斯滤波，以平滑图像 
-				absdiff(image, background_gray, image_gray);//当前帧跟背景图相减  
-				threshold(background_gray, image_gray, 10, 255.0, CV_THRESH_BINARY);//二值化前景图
-				//cvRunningAvg(image, background_image, 0.003, 0);//更新背景  
-				  
-				imshow("background", background_image);  
+				trackWindow = motion_detection(image,image_gray,background_gray);//运动检测,返回跟踪区域
+				motion_tracking(trackWindow,pre_frame);//运动追踪
+				imshow("background", background_gray);  
 				imshow("foreground", image);  
 			}
-			
+
 			//读取键盘输入操作
 			char c = (char)waitKey(10);
 			if( c == 27 )
 				break;
+			switch(c){
+			case '1':
+				break;
+			}
 		}
 	}
 	return 0;
 }
+

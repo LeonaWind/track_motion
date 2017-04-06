@@ -126,6 +126,7 @@
     <ClCompile Include="code.cpp" />
     <ClCompile Include="motion_detection.cpp" />
     <ClCompile Include="motion_tracking.cpp" />
+    <ClCompile Include="temp.cpp" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">
