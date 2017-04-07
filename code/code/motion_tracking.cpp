@@ -56,7 +56,7 @@ void motion_tracking(Rect trackWindow,Mat image){
 				Rect(0, 0, cols, rows);//Rect函数为矩阵的偏移和大小，即第一二个参数为矩阵的左上角点坐标，第三四个参数为矩阵的宽和高
 		}
 
-		cvtColor( backproj, image, COLOR_GRAY2BGR );
+		//cvtColor( backproj, image, COLOR_GRAY2BGR );
 		ellipse( image, trackBox, Scalar(0,0,255), 3, CV_AA );
 
 		imshow( "CamShift Demo", image );

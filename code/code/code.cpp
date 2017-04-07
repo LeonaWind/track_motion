@@ -47,16 +47,14 @@ int main( int argc, const char** argv )
 			pre_frame.copyTo(image);
 			//如果是第一帧，需要申请内存，并初始化    
 			if(get_background_flag == false) { 
-				//转化成单通道图像再处理  
-				cvtColor(image, background_gray, CV_BGR2GRAY);  
+				//转化成单通道图像再处理   
 				cvtColor(image, image_gray, CV_BGR2GRAY); 
+				image_gray.convertTo(background_gray,CV_32F); 
 				get_background_flag = true;
 			}else{
 				cvtColor(image, image_gray, CV_BGR2GRAY);//变为灰度图 
-				trackWindow = motion_detection(image,image_gray,background_gray);//运动检测,返回跟踪区域
-				motion_tracking(trackWindow,pre_frame);//运动追踪
-				imshow("background", background_gray);  
-				imshow("foreground", image);  
+				trackWindow = motion_detection(image_gray,background_gray);//运动检测,返回跟踪区域
+				motion_tracking(trackWindow,image);//运动追踪 
 			}
 
 			//读取键盘输入操作
