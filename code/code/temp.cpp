@@ -341,3 +341,53 @@ bool acceptTrackedPoint(int i)
 return status[i] && ((abs(points1[i].x - points2[i].x) + abs(points1[i].y - points2[i].y)) > 2);
 }
 */
+
+/*
+		//找到轮廓最多的区域
+		for (vector<vector<Point>>::const_iterator iter = contours.begin(); iter != contours.end(); iter++){
+		if(!(*iter).empty()){
+		point_count=0;
+		for (vector<Point>::const_iterator inner_iter = (*iter).begin(); inner_iter != (*iter).end(); inner_iter++){
+		point_count++;
+		}
+		}
+		if(point_count>point_count_max){
+		point_count_max=point_count;
+		contours_count_max=contours_count;
+		}
+		contours_count++;
+		}
+
+		//找到跟踪区域
+		vector<Point> all_contours;
+		for (vector<Point>::const_iterator inner_iter = contours[contours_count_max].begin(); inner_iter != contours[contours_count_max].end(); inner_iter++){
+		Point x;
+		x.x=(*inner_iter).x;
+		x.y=(*inner_iter).y;
+		all_contours.push_back(x);
+		}
+		if(!all_contours.empty()){
+		rect = boundingRect(all_contours); 
+		rectangle(dest_image, cvPoint(rect.x, rect.y), cvPoint(rect.x + rect.width, rect.y + rect.height),CV_RGB(255,255, 255), 1, 8, 0);
+		}
+		*/
+
+		/*
+		//简单做法，把所有运动的点放在一个大矩形内
+		vector<Point> all_contours;
+		for (vector<vector<Point>>::const_iterator iter = contours.begin(); iter != contours.end(); iter++)
+		{
+		for (vector<Point>::const_iterator inner_iter = (*iter).begin(); inner_iter != (*iter).end(); inner_iter++){
+		Point x;
+		x.x=(*inner_iter).x;
+		x.y=(*inner_iter).y;
+		all_contours.push_back(x);
+		point_count++;
+		if(point_count>=count_max) break;
+		}
+		}  
+		if(!all_contours.empty()){
+		rect = boundingRect(all_contours); 
+		rectangle(dest_image, cvPoint(rect.x, rect.y), cvPoint(rect.x + rect.width, rect.y + rect.height),CV_RGB(255,255, 255), 1, 8, 0);
+		}
+		*/

@@ -16,8 +16,11 @@ const char* keys =
 
 int main( int argc, const char** argv )
 {
-	VideoCapture capture;//打开摄像头
 	Rect trackWindow;//跟踪的区域
+
+	/*
+	//打开摄像头
+	VideoCapture capture;
 	CommandLineParser parser(argc, argv, keys);
 	int camNum = parser.get<int>("0");
 	capture.open(camNum);
@@ -27,6 +30,19 @@ int main( int argc, const char** argv )
 		cout << "***Could not initialize capturing...***\n";
 		cout << "Current parameter's value: \n";
 		parser.printParams();
+		return -1;
+	}
+	*/
+
+	//打开视频
+	VideoCapture videoCapture("G:/毕设/test.mp4");
+	double rate = videoCapture.get(CV_CAP_PROP_FPS);
+	int delay = 1000/rate;//两帧间的间隔时间:
+
+    if( !videoCapture.isOpened() )
+	{
+		cout << "***Could not initialize capturing...***\n";
+		cout << "Current parameter's value: \n";
 		return -1;
 	}
 
@@ -41,7 +57,11 @@ int main( int argc, const char** argv )
 
 	while(1)
 	{
-		capture >> pre_frame;//读入一帧图像
+		//capture >> pre_frame;//读入一帧图像
+		videoCapture.read(pre_frame);
+
+		imshow("current_frame",pre_frame);
+
 		if( !pre_frame.empty() )
 		{
 			pre_frame.copyTo(image);
@@ -58,7 +78,7 @@ int main( int argc, const char** argv )
 			}
 
 			//读取键盘输入操作
-			char c = (char)waitKey(10);
+			char c = (char)waitKey(delay);
 			if( c == 27 )
 				break;
 			switch(c){
