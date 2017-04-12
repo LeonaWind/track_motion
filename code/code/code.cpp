@@ -66,14 +66,18 @@ int main( int argc, const char** argv )
 		{
 			cout<<"这是第"<<get_background_flag<<"帧"<<endl;
 			pre_frame.copyTo(image);
+
+			//图像预处理
+			GaussianBlur(image,image,cv::Size(0,0), 3, 0, 0);//高斯滤波
+			cvtColor(image, image_gray, CV_BGR2GRAY);//获取灰度图image_gray,单通道图像
+			//equalizeHist(image_gray,image_gray);//直方图均衡化
+			//imshow("equalizeHist_gray",image_gray);
+
 			//如果是第一帧，需要申请内存，并初始化    
 			if(get_background_flag == 0) { 
-				//转化成单通道图像再处理   
-				cvtColor(image, image_gray, CV_BGR2GRAY); 
-				image_gray.convertTo(background_gray,CV_32F); 
+				image_gray.convertTo(background_gray,CV_32F); //第一帧作为背景图
 				++get_background_flag;
 			}else{
-				cvtColor(image, image_gray, CV_BGR2GRAY);//变为灰度图 
 				if((get_background_flag%50==0)||(get_background_flag%50==1)||(get_background_flag%50==2)){
 					Rect track_window_temp = motion_detection(image_gray,background_gray);//运动检测,返回跟踪区域
 					track_window=rectA_intersect_rectB(track_window_temp,track_window);//求两个区域的交叉区域
