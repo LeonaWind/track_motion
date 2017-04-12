@@ -27,10 +27,10 @@ int main( int argc, const char** argv )
 
 	if( !capture.isOpened() )
 	{
-		cout << "***Could not initialize capturing...***\n";
-		cout << "Current parameter's value: \n";
-		parser.printParams();
-		return -1;
+	cout << "***Could not initialize capturing...***\n";
+	cout << "Current parameter's value: \n";
+	parser.printParams();
+	return -1;
 	}
 	*/
 
@@ -39,7 +39,7 @@ int main( int argc, const char** argv )
 	double rate = videoCapture.get(CV_CAP_PROP_FPS);
 	int delay = 1000/rate;//两帧间的间隔时间:
 
-    if( !videoCapture.isOpened() )
+	if( !videoCapture.isOpened() )
 	{
 		cout << "***Could not initialize capturing...***\n";
 		cout << "Current parameter's value: \n";
@@ -52,8 +52,12 @@ int main( int argc, const char** argv )
 	bool paused = false;
 	int get_background_flag = 0;//计算当前为第几帧
 	Mat image,background_image;//当前处理图像，背景图
+	Mat image1, image2, image3;//改进三帧差法检测运动物体时存储的三帧图像
 	Mat image_gray,background_gray;//当前处理图像，背景图的灰度图
 
+	cout<<"******************基本信息********************"<<endl;
+	cout<<"帧率"<<delay<<endl;
+	cout<<"**********************************************"<<endl;
 
 	while(1)
 	{
@@ -70,6 +74,7 @@ int main( int argc, const char** argv )
 			//图像预处理
 			GaussianBlur(image,image,cv::Size(0,0), 3, 0, 0);//高斯滤波
 			cvtColor(image, image_gray, CV_BGR2GRAY);//获取灰度图image_gray,单通道图像
+			imshow("image_gray_start",image_gray);
 			//equalizeHist(image_gray,image_gray);//直方图均衡化
 			//imshow("equalizeHist_gray",image_gray);
 
@@ -78,10 +83,24 @@ int main( int argc, const char** argv )
 				image_gray.convertTo(background_gray,CV_32F); //第一帧作为背景图
 				++get_background_flag;
 			}else{
-				if((get_background_flag%50==0)||(get_background_flag%50==1)||(get_background_flag%50==2)){
-					Rect track_window_temp = motion_detection(image_gray,background_gray);//运动检测,返回跟踪区域
-					track_window=rectA_intersect_rectB(track_window_temp,track_window);//求两个区域的交叉区域
+				//背景减法检测运动物体
+				/*if((get_background_flag%50==0)||(get_background_flag%50==1)||(get_background_flag%50==2)){
+				Rect track_window_temp = motion_detection(image_gray,background_gray);//运动检测,返回跟踪区域
+				track_window=rectA_intersect_rectB(track_window_temp,track_window);//求两个区域的交叉区域
+				}*/
+
+				//改进三帧差法检测运动物体
+				if(get_background_flag%10==1){
+					image1=image_gray.clone();//获取第一张图
 				}
+				if(get_background_flag%10==2){
+					image2=image_gray.clone();//获取第二张图
+				}
+				if(get_background_flag%10==3){
+					image3=image_gray.clone();//获取第三张图
+					track_window = frame3_diff_motion_detection(image1,image2,image3,background_gray);//运动检测,返回跟踪区域
+				}
+
 				motion_tracking(track_window,image);//运动追踪 
 				++get_background_flag;
 			}
