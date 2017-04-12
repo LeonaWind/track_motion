@@ -1,7 +1,12 @@
 #include"motion_tracking.h"
 
-//运动追踪
-void motion_tracking(Rect trackWindow,Mat image){
+//-------------------------------------------------------------------------------------------------
+// function: motion_tracking
+// brief: 运动追踪
+// parameter:输入图像Mat image，被跟踪区域Rect track_window
+// return: 更新被跟踪区域Rect track_window，显示追踪结果
+//-------------------------------------------------------------------------------------------------
+void motion_tracking(Rect &track_window,Mat image){
 
 	Mat frame, hsv;//image的HSV空间图像
 	Mat hue;//hsv的h分量
@@ -13,7 +18,7 @@ void motion_tracking(Rect trackWindow,Mat image){
 
 	int _vmin = vmin, _vmax = vmax;
 
-	if(trackWindow.width>0&&trackWindow.height>0){
+	if(track_window.width>0&&track_window.height>0){
 		cvtColor(image, hsv, COLOR_BGR2HSV);//颜色空间转换函数,将RGB颜色转向HSV
 		//inRange函数的功能是检查输入数组每个元素大小是否在2个给定数值之间，可以有多通道,mask保存0通道的最小值，也就是h分量
 		inRange(hsv, Scalar(0, smin, MIN(_vmin,_vmax)),
@@ -23,7 +28,7 @@ void motion_tracking(Rect trackWindow,Mat image){
 		mixChannels(&hsv, 1, &hue, 1, ch, 1);//将hsv第一个通道(也就是色调)的数复制到hue中
 
 
-		Mat roi(hue, trackWindow), maskroi(mask, trackWindow);//此处的构造函数roi用的是Mat hue的矩阵头，且roi的数据指针指向hue，即共用相同的数据，trackWindow为其感兴趣的区域 
+		Mat roi(hue, track_window), maskroi(mask, track_window);//此处的构造函数roi用的是Mat hue的矩阵头，且roi的数据指针指向hue，即共用相同的数据，track_window为其感兴趣的区域 
 		calcHist(&roi, 1, 0, maskroi, hist, 1, &hsize, &phranges);//将roi的0通道计算直方图并通过mask放入hist中，hsize为每一维直方图的大小  
 		normalize(hist, hist, 0, 255, CV_MINMAX);//将hist矩阵进行数组范围归一化，都归一化到0~255
 
@@ -46,13 +51,13 @@ void motion_tracking(Rect trackWindow,Mat image){
 		calcBackProject(&hue, 1, 0, hist, backproj, &phranges);
 		backproj &= mask;
 		//使用CamShift进行跟踪,TermCriteria这个类是作为迭代算法的终止条件
-		RotatedRect trackBox = CamShift(backproj, trackWindow,
+		RotatedRect trackBox = CamShift(backproj, track_window,
 			TermCriteria( CV_TERMCRIT_EPS | CV_TERMCRIT_ITER, 10, 1 ));
-		if( trackWindow.area() <= 1 )
+		if( track_window.area() <= 1 )
 		{
 			int cols = backproj.cols, rows = backproj.rows, r = (MIN(cols, rows) + 5)/6;
-			trackWindow = Rect(trackWindow.x - r, trackWindow.y - r,
-				trackWindow.x + r, trackWindow.y + r) &
+			track_window = Rect(track_window.x - r, track_window.y - r,
+				track_window.x + r, track_window.y + r) &
 				Rect(0, 0, cols, rows);//Rect函数为矩阵的偏移和大小，即第一二个参数为矩阵的左上角点坐标，第三四个参数为矩阵的宽和高
 		}
 
