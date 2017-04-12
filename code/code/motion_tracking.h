@@ -9,6 +9,6 @@
 using namespace cv;
 using namespace std;
 
-void motion_tracking(Rect trackWindow,Mat image);//运动追踪
+void motion_tracking(Rect &track_window,Mat image);//运动追踪
 
 #endif

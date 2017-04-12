@@ -177,3 +177,30 @@ Rect get_track_selection(Mat &image)
 	imshow("get_track_selection",dest_image);  
 	return rect;
 }  
+
+Rect rectA_intersect_rectB(Rect rectA, Rect rectB){
+	float start_min_x=min(rectA.x,rectB.x);
+	float start_max_x=max(rectA.x,rectB.x);
+	float start_min_y=min(rectA.y,rectB.y);
+	float start_max_y=max(rectA.y,rectB.y);
+
+	float end_min_x=min(rectA.x+rectA.width,rectB.x+rectB.width);
+	float end_max_x=max(rectA.x+rectA.width,rectB.x+rectB.width);
+	float end_min_y=min(rectA.y+rectA.height,rectB.y+rectB.height);
+	float end_max_y=max(rectA.y+rectA.height,rectB.y+rectB.height);
+
+	Rect result;
+
+	if(end_min_x<start_max_x||end_min_y<start_max_y){
+		return rectA;
+	}
+
+	result.x=start_max_x;
+	result.y=start_max_y;
+	result.width=end_min_x-start_max_x;
+	result.height=end_min_y-start_max_y;
+
+	return result;
+}
+
+

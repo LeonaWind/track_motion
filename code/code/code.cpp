@@ -16,7 +16,7 @@ const char* keys =
 
 int main( int argc, const char** argv )
 {
-	Rect trackWindow;//跟踪的区域
+	Rect track_window;//跟踪的区域
 
 	/*
 	//打开摄像头
@@ -50,7 +50,7 @@ int main( int argc, const char** argv )
 	Mat pre_gray,cur_gray;
 	int nFrmNum = 0;//读取的帧数
 	bool paused = false;
-	bool get_background_flag = false;//是否为第一帧图像
+	int get_background_flag = 0;//计算当前为第几帧
 	Mat image,background_image;//当前处理图像，背景图
 	Mat image_gray,background_gray;//当前处理图像，背景图的灰度图
 
@@ -64,17 +64,22 @@ int main( int argc, const char** argv )
 
 		if( !pre_frame.empty() )
 		{
+			cout<<"这是第"<<get_background_flag<<"帧"<<endl;
 			pre_frame.copyTo(image);
 			//如果是第一帧，需要申请内存，并初始化    
-			if(get_background_flag == false) { 
+			if(get_background_flag == 0) { 
 				//转化成单通道图像再处理   
 				cvtColor(image, image_gray, CV_BGR2GRAY); 
 				image_gray.convertTo(background_gray,CV_32F); 
-				get_background_flag = true;
+				++get_background_flag;
 			}else{
 				cvtColor(image, image_gray, CV_BGR2GRAY);//变为灰度图 
-				trackWindow = motion_detection(image_gray,background_gray);//运动检测,返回跟踪区域
-				motion_tracking(trackWindow,image);//运动追踪 
+				if((get_background_flag%50==0)||(get_background_flag%50==1)||(get_background_flag%50==2)){
+					Rect track_window_temp = motion_detection(image_gray,background_gray);//运动检测,返回跟踪区域
+					track_window=rectA_intersect_rectB(track_window_temp,track_window);//求两个区域的交叉区域
+				}
+				motion_tracking(track_window,image);//运动追踪 
+				++get_background_flag;
 			}
 
 			//读取键盘输入操作
