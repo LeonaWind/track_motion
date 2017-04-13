@@ -1,22 +1,88 @@
 #include"motion_detection.h"
 
 //-------------------------------------------------------------------------------------------------
-// function: motion_detection
-// brief: 运动检测
+// function: frame3_diff_motion_detection
+// brief: 改进三帧差法检测运动物体
+// parameter:第k-1帧图像Mat image_gray_pre，第k帧图像Mat image_gray，第k+1帧图像Mat image_gray_next
+// return: 被跟踪区域Rect selection
+//-------------------------------------------------------------------------------------------------
+Rect frame3_diff_motion_detection(Mat image_gray_pre,Mat image_gray,Mat image_gray_next,Mat &background_gray_cv32f){
+	int rows=image_gray.rows;
+	int cols=image_gray.cols;
+	Mat output(rows,cols,CV_8UC1);//检测出的运动图像
+	int thres=10;
+
+	//1.两两图像做差分
+	Mat diff_gray(rows,cols,CV_8UC1);
+	Mat diff_gray1, diff_gray2, diff_gray3;
+	absdiff(image_gray_pre, image_gray, diff_gray1);
+	absdiff(image_gray, image_gray_next, diff_gray2);
+	absdiff(image_gray_next, image_gray_pre, diff_gray3);
+
+	//2.求均值
+	for(int i=0;i<rows;i++)  {  
+		for(int j=0;j<cols;j++)  {    
+			diff_gray.at<uchar>(i,j) = (diff_gray1.at<uchar>(i,j)+diff_gray2.at<uchar>(i,j)+diff_gray3.at<uchar>(i,j))/3; 
+			if(diff_gray.at<uchar>(i,j)>thres){//二值化
+				diff_gray.at<uchar>(i,j) = 255;
+			}else{
+				diff_gray.at<uchar>(i,j) = 0;
+			}
+			//cout<<(int)diff_gray.at<uchar>(i,j)<<" ";
+		}    
+	} 
+
+	//3.形态学处理
+
+	//4.第k帧背景建模
+	/*Mat background_diff_gray;//当前图与背景图的差异
+	Mat background_gray_cv8u;//CV_8U格式背景图 
+	double learningRate=0.9;//学习率
+	background_gray_cv32f.convertTo (background_gray_cv8u,CV_8U);
+
+	absdiff(image_gray, background_gray_cv8u, background_diff_gray);//当前帧跟背景图相减  
+	threshold(background_diff_gray, background_diff_gray, 40, 255.0, CV_THRESH_BINARY);//二值化前景图
+	accumulateWeighted (image_gray,background_gray_cv32f,learningRate,background_diff_gray);//更新背景，output作为掩码
+
+	//imshow("background_diff_gray",background_diff_gray);
+	*/
+
+	//5.第k帧canny边缘检测
+	Mat image_gray_canny;
+	Canny(image_gray, image_gray_canny, 3, 9, 3);
+
+	//6.第k帧边缘检测结果与帧差法结果进行与运算
+	mat_and(diff_gray,image_gray_canny,diff_gray);
+
+	//7.与运算结果与背景建模结果进行或运算
+	//mat_or(diff_gray,background_diff_gray,output);
+
+	//8.形态学处理
+	output=diff_gray;
+	imshow("output",output);
+
+	//imshow("image_gray_canny",image_gray_canny);
+	//imshow("diff_gray",diff_gray);
+	Rect selection = get_track_selection_all(output); //简单做法获取追踪区域
+	return selection;
+
+}
+
+//-------------------------------------------------------------------------------------------------
+// function: background_motion_detection
+// brief: 背景减法检测运动物体
 // parameter:当前图像Mat image，当前图像灰度图Mat image_gray，CV_32F背景图像灰度图Mat background_gray
 // return: 被跟踪区域Rect selection
 //-------------------------------------------------------------------------------------------------
-Rect motion_detection(Mat &image_gray,Mat &background_gray_cv32f){
+Rect background_motion_detection(Mat &image_gray,Mat &background_gray_cv32f){
 	Mat diff_gray;//当前图与背景图的差异
 	Mat output;//检测出的运动图像
-	double learningRate=0.8;//学习率
+	double learningRate=0.9;//学习率
 	Mat background_gray_cv8u;//CV_8U格式背景图 
 	background_gray_cv32f.convertTo (background_gray_cv8u,CV_8U);
 
-	GaussianBlur(image_gray, image_gray, cv::Size(0,0), 3, 0, 0);//先做高斯滤波，以平滑图像 
 	absdiff(image_gray, background_gray_cv8u, diff_gray);//当前帧跟背景图相减  
 	threshold(diff_gray, output, 30, 255.0, CV_THRESH_BINARY);//二值化前景图
-	//image_gray.copyTo(background_gray);//更新背景图
 	accumulateWeighted (image_gray,background_gray_cv32f,learningRate,output);//更新背景，output作为掩码
 
 	//imshow("foreground",output);
@@ -25,6 +91,47 @@ Rect motion_detection(Mat &image_gray,Mat &background_gray_cv32f){
 
 	Rect selection = get_track_selection(output); 
 	return selection;
+
+}
+
+//-------------------------------------------------------------------------------------------------
+// function: get_track_selection_all
+// brief: 获取追踪区域,简单做法：把所有运动的点放在一个大矩形内
+// parameter:输入图像Mat image
+// return: 被跟踪区域Rect selection
+//-------------------------------------------------------------------------------------------------
+Rect get_track_selection_all(Mat &image){
+
+	vector<vector<Point>> contours;
+	vector<Vec4i> hierarchy;
+	Mat dest_image=Mat::zeros(image.rows,image.cols,CV_8UC3);
+	int count_max=1000;//最多保存点
+	int point_count=0;
+	CvRect rect;//追踪区域
+
+	findContours(image, contours, hierarchy, CV_RETR_EXTERNAL, CV_CHAIN_APPROX_SIMPLE); // 查找轮廓                
+	Scalar color(rand()&255,rand()&255,rand()&255);
+	drawContours(dest_image, contours,-1,color,3);// 填充所有轮廓 
+
+	vector<Point> all_contours;
+	for (vector<vector<Point>>::const_iterator iter = contours.begin(); iter != contours.end(); iter++)
+	{
+		for (vector<Point>::const_iterator inner_iter = (*iter).begin(); inner_iter != (*iter).end(); inner_iter++){
+			Point x;
+			x.x=(*inner_iter).x;
+			x.y=(*inner_iter).y;
+			all_contours.push_back(x);
+			point_count++;
+			if(point_count>=count_max) break;
+		}
+	}  
+	if(!all_contours.empty()){
+		rect = boundingRect(all_contours); 
+		rectangle(dest_image, cvPoint(rect.x, rect.y), cvPoint(rect.x + rect.width, rect.y + rect.height),CV_RGB(255,255, 255), 1, 8, 0);
+	}
+
+	imshow("get_track_selection",dest_image);  
+	return rect;
 
 }
 
@@ -65,7 +172,7 @@ Rect get_track_selection(Mat &image)
 				Scalar(255, 0, 255),  
 				Scalar(0, 255, 255)  
 			};  
-			int clusterCount=4;//聚类大小
+			int clusterCount=1;//聚类大小
 			int* clusterIdxArr =  new int[clusterCount];
 			double* clusterIdxDis =  new double[clusterCount];//保存平均距离
 			clusterCount = MIN(clusterCount, point_count); 
@@ -178,6 +285,7 @@ Rect get_track_selection(Mat &image)
 	return rect;
 }  
 
+
 Rect rectA_intersect_rectB(Rect rectA, Rect rectB){
 	float start_min_x=min(rectA.x,rectB.x);
 	float start_max_x=max(rectA.x,rectB.x);
@@ -203,4 +311,46 @@ Rect rectA_intersect_rectB(Rect rectA, Rect rectB){
 	return result;
 }
 
+//-------------------------------------------------------------------------------------------------
+// function: mat_and
+// brief: 两个矩阵进行与运算
+// parameter:输入图像Mat src1,Mat src2，与运算结果Mat &dst
+// return: 空，与运算结果保存在dst中
+//-------------------------------------------------------------------------------------------------
+void mat_and(Mat src1,Mat src2,Mat &dst){
+	int rows=src1.rows;
+	int cols=src1.cols;
+	if(src2.rows != rows || src2.cols != cols){
+		cout<<"两个矩阵尺寸不相等"<<endl;
+		return;
+	}
+	for (int i = 0; i < rows; i++){  
+		for (int j = 0; j < cols; j++){
+			//cout<<(int)src1.at<uchar>(i,j)<<" "<<(int)src2.at<uchar>(i,j)<<endl;
+			dst.at<uchar>(i,j) = src1.at<uchar>(i,j)&src2.at<uchar>(i,j);
+			if(dst.at<uchar>(i,j)==1) dst.at<uchar>(i,j)=255;
+		}
+	} 
+}
 
+//-------------------------------------------------------------------------------------------------
+// function: mat_or
+// brief: 两个矩阵进行或运算
+// parameter:输入图像Mat src1,Mat src2，与运算结果Mat &dst
+// return: 空，或运算结果保存在dst中
+//-------------------------------------------------------------------------------------------------
+void mat_or(Mat src1,Mat src2,Mat &dst){
+	int rows=src1.rows;
+	int cols=src1.cols;
+	if(src2.rows != rows || src2.cols != cols){
+		cout<<"两个矩阵尺寸不相等"<<endl;
+		return;
+	}
+	for (int i = 0; i < rows; i++){  
+		for (int j = 0; j < cols; j++){
+			//cout<<(int)src1.at<uchar>(i,j)<<" "<<(int)src2.at<uchar>(i,j)<<endl;
+			dst.at<uchar>(i,j) = src1.at<uchar>(i,j)|src2.at<uchar>(i,j);
+			if(dst.at<uchar>(i,j)==1) dst.at<uchar>(i,j)=255;
+		}
+	} 
+}
