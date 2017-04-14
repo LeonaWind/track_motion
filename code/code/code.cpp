@@ -12,6 +12,7 @@ using namespace std;
 int vmin = 10;
 int vmax = 256;
 int smin = 60;
+bool debug=true;
 
 const char* keys =
 {
@@ -93,7 +94,7 @@ int main( int argc, const char** argv )
 
 	while(1)
 	{
-		start = clock();
+		if(debug) start = clock();
 		//读入一帧图像
 		if(capture_flag == 1){
 			capture >> pre_frame;
@@ -103,8 +104,8 @@ int main( int argc, const char** argv )
 
 		if( !pre_frame.empty() )
 		{
-			imshow("current_frame",pre_frame);
-			cout<<"这是第"<<get_background_flag<<"帧"<<endl;
+			if(debug) imshow("current_frame",pre_frame);
+			if(debug) cout<<"这是第"<<get_background_flag<<"帧"<<endl;
 			pre_frame.copyTo(image);
 
 			//图像预处理
@@ -137,17 +138,17 @@ int main( int argc, const char** argv )
 					if(track_window_temp.width>0&&track_window_temp.height>0){
 						track_window=track_window_temp;
 					}
-					detection_time=clock();
+					if(debug) detection_time=clock();
 				}
 
 				trackBox=motion_tracking(track_window,image);//运动追踪 
-				tracking_time=clock();
+				if(debug) tracking_time=clock();
 				++get_background_flag;
 
 				//显示结果
 				ellipse( pre_frame, trackBox, Scalar(0,0,255), 3, CV_AA );
 				imshow( "CamShift Demo", pre_frame );
-				finish = clock();
+				if(debug) finish = clock();
 
 			}
 
@@ -160,18 +161,20 @@ int main( int argc, const char** argv )
 				break;
 			}
 		}
-		duration = (double)(finish - start) / CLOCKS_PER_SEC; //计算效率
-		if(detection_time>start){
-			detection_duration=(double)(detection_time - start) / CLOCKS_PER_SEC;
-			tracking_duration=(double)(tracking_time - detection_time) / CLOCKS_PER_SEC;
-		}else{
-			detection_duration=0;
-			tracking_duration=(double)(tracking_time - start) / CLOCKS_PER_SEC;
-		}
+		if(debug){
+			duration = (double)(finish - start) / CLOCKS_PER_SEC; //计算效率
+			if(detection_time>start){
+				detection_duration=(double)(detection_time - start) / CLOCKS_PER_SEC;
+				tracking_duration=(double)(tracking_time - detection_time) / CLOCKS_PER_SEC;
+			}else{
+				detection_duration=0;
+				tracking_duration=(double)(tracking_time - start) / CLOCKS_PER_SEC;
+			}
 
-		cout << "duration" << duration<<endl;
-		cout << "detection_duration=" << detection_duration<<endl;
-		cout << "tracking_duration=" << tracking_duration<<endl;
+			cout << "duration" << duration<<endl;
+			cout << "detection_duration=" << detection_duration<<endl;
+			cout << "tracking_duration=" << tracking_duration<<endl;
+		}
 	}
 	return 0;
 }

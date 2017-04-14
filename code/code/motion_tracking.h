@@ -12,6 +12,7 @@ using namespace std;
 extern int vmin;
 extern int vmax;
 extern int smin;
+extern bool debug;
 
 RotatedRect motion_tracking(Rect &track_window,Mat image);//ÔË¶¯×·×Ù
 
