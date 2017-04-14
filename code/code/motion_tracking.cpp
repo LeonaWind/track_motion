@@ -1,5 +1,7 @@
 #include"motion_tracking.h"
 
+extern bool debug;
+
 //-------------------------------------------------------------------------------------------------
 // function: motion_tracking
 // brief: 运动追踪
@@ -24,13 +26,10 @@ RotatedRect motion_tracking(Rect &track_window,Mat image){
 		inRange(hsv, Scalar(0, smin, MIN(_vmin,_vmax)),
 			Scalar(180, 256, MAX(_vmin, _vmax)), mask);
 
-		imshow( "mask", mask );
-
 		int ch[] = {0, 0};
 		hue.create(hsv.size(), hsv.depth());
 		mixChannels(&hsv, 1, &hue, 1, ch, 1);//将hsv第一个通道(也就是色调)的数复制到hue中
 
-		cout<<"track_window: "<<track_window<<endl;
 		Mat roi(hue, track_window);//hue中用来计算直方图的区域,track_window为其感兴趣的区域 
 		Mat maskroi(mask, track_window);//roi对应的掩码，即roi对应maskroi值为1的点将用来计算直方图
 		calcHist(&roi, 1, 0, maskroi, hist, 1, &hsize, &phranges);//将roi的0通道计算直方图放入hist中（以maskroi为掩码），hsize为每一维直方图的大小  
@@ -66,7 +65,7 @@ RotatedRect motion_tracking(Rect &track_window,Mat image){
 		}
 
 		//cvtColor( backproj, image, COLOR_GRAY2BGR );
-		imshow( "Histogram", histimg );
+		if(debug) imshow( "Histogram", histimg );
 
 		return trackBox;
 	}

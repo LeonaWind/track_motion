@@ -1,5 +1,7 @@
 #include"motion_detection.h"
 
+extern bool debug;
+
 //-------------------------------------------------------------------------------------------------
 // function: frame3_diff_motion_detection
 // brief: 改进三帧差法检测运动物体
@@ -62,7 +64,7 @@ Rect frame3_diff_motion_detection(Mat image_gray_pre,Mat image_gray,Mat image_gr
 
 	//8.形态学处理
 	morphologyEx(diff_gray,output,MORPH_CLOSE,element);
-	imshow("形态学处理结果",output);
+	if(debug) imshow("检测最后结果",output);
 
 	//imshow("image_gray_canny",image_gray_canny);
 	//imshow("diff_gray",diff_gray);
@@ -158,7 +160,6 @@ Rect get_track_selection_all(Mat &image){
 	if(!all_contours.empty()){
 		rect = boundingRect(all_contours); 
 	}
-	cout<<rect<<endl;
 	return rect;
 }
 
