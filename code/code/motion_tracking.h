@@ -9,6 +9,10 @@
 using namespace cv;
 using namespace std;
 
-void motion_tracking(Rect &track_window,Mat image);//运动追踪
+extern int vmin;
+extern int vmax;
+extern int smin;
+
+RotatedRect motion_tracking(Rect &track_window,Mat image);//运动追踪
 
 #endif
