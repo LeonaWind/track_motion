@@ -9,6 +9,10 @@
 using namespace cv;
 using namespace std;
 
+int vmin = 10;
+int vmax = 256;
+int smin = 60;
+
 const char* keys =
 {
 	"{1|  | 0 | camera number}"
@@ -20,6 +24,8 @@ int main( int argc, const char** argv )
 	char choice;
 	int capture_flag=0;
 	int delay=0;//帧率
+	clock_t start, finish,detection_time,tracking_time;//用于计算时间复杂度
+	double duration,detection_duration,tracking_duration;
 
 	cout<<"***************请输入您的选择*****************"<<endl;
 	cout<<"1--打开电脑摄像头"<<endl;
@@ -58,7 +64,7 @@ int main( int argc, const char** argv )
 	if(capture_flag == 2){
 		videoCapture.open("G:/毕设/test.mp4");
 		double rate = videoCapture.get(CV_CAP_PROP_FPS);
-		delay = 1000/rate;//两帧间的间隔时间:
+		delay = 2000/rate;//两帧间的间隔时间:
 		if( !videoCapture.isOpened() )
 		{
 			cout << "***Could not initialize capturing...***\n";
@@ -78,9 +84,16 @@ int main( int argc, const char** argv )
 	Mat image,background_image;//当前处理图像，背景图
 	Mat image1, image2, image3;//改进三帧差法检测运动物体时存储的三帧图像
 	Mat image_gray,background_gray;//当前处理图像，背景图的灰度图
+	RotatedRect trackBox;//追踪结果
+
+	namedWindow( "CamShift Demo", 1);
+	createTrackbar( "Vmin", "CamShift Demo", &vmin, 256, 0 );
+	createTrackbar( "Vmax", "CamShift Demo", &vmax, 256, 0 );
+	createTrackbar( "Smin", "CamShift Demo", &smin, 256, 0 );
 
 	while(1)
 	{
+		start = clock();
 		//读入一帧图像
 		if(capture_flag == 1){
 			capture >> pre_frame;
@@ -97,7 +110,6 @@ int main( int argc, const char** argv )
 			//图像预处理
 			GaussianBlur(image,image,cv::Size(0,0), 3, 0, 0);//高斯滤波
 			cvtColor(image, image_gray, CV_BGR2GRAY);//获取灰度图image_gray,单通道图像
-			imshow("image_gray_start",image_gray);
 			//equalizeHist(image_gray,image_gray);//直方图均衡化
 			//imshow("equalizeHist_gray",image_gray);
 
@@ -121,11 +133,22 @@ int main( int argc, const char** argv )
 				}
 				if(get_background_flag%30==3){
 					image3=image_gray.clone();//获取第三张图
-					track_window = frame3_diff_motion_detection(image1,image2,image3,background_gray);//运动检测,返回跟踪区域
+					Rect track_window_temp = frame3_diff_motion_detection(image1,image2,image3,background_gray);//运动检测,返回跟踪区域
+					if(track_window_temp.width>0&&track_window_temp.height>0){
+						track_window=track_window_temp;
+					}
+					detection_time=clock();
 				}
 
-				motion_tracking(track_window,image);//运动追踪 
+				trackBox=motion_tracking(track_window,image);//运动追踪 
+				tracking_time=clock();
 				++get_background_flag;
+
+				//显示结果
+				ellipse( pre_frame, trackBox, Scalar(0,0,255), 3, CV_AA );
+				imshow( "CamShift Demo", pre_frame );
+				finish = clock();
+
 			}
 
 			//读取键盘输入操作
@@ -137,6 +160,18 @@ int main( int argc, const char** argv )
 				break;
 			}
 		}
+		duration = (double)(finish - start) / CLOCKS_PER_SEC; //计算效率
+		if(detection_time>start){
+			detection_duration=(double)(detection_time - start) / CLOCKS_PER_SEC;
+			tracking_duration=(double)(tracking_time - detection_time) / CLOCKS_PER_SEC;
+		}else{
+			detection_duration=0;
+			tracking_duration=(double)(tracking_time - start) / CLOCKS_PER_SEC;
+		}
+
+		cout << "duration" << duration<<endl;
+		cout << "detection_duration=" << detection_duration<<endl;
+		cout << "tracking_duration=" << tracking_duration<<endl;
 	}
 	return 0;
 }

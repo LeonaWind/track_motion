@@ -33,6 +33,9 @@ Rect frame3_diff_motion_detection(Mat image_gray_pre,Mat image_gray,Mat image_gr
 	} 
 
 	//3.形态学处理
+	Mat element=getStructuringElement(MORPH_RECT,Size(15,15));
+	morphologyEx(diff_gray,diff_gray,MORPH_CLOSE,element);
+	//imshow("形态学处理结果",diff_gray);
 
 	//4.第k帧背景建模
 	/*Mat background_diff_gray;//当前图与背景图的差异
@@ -58,8 +61,8 @@ Rect frame3_diff_motion_detection(Mat image_gray_pre,Mat image_gray,Mat image_gr
 	//mat_or(diff_gray,background_diff_gray,output);
 
 	//8.形态学处理
-	output=diff_gray;
-	imshow("output",output);
+	morphologyEx(diff_gray,output,MORPH_CLOSE,element);
+	imshow("形态学处理结果",output);
 
 	//imshow("image_gray_canny",image_gray_canny);
 	//imshow("diff_gray",diff_gray);
@@ -100,7 +103,7 @@ Rect background_motion_detection(Mat &image_gray,Mat &background_gray_cv32f){
 // parameter:输入图像Mat image
 // return: 被跟踪区域Rect selection
 //-------------------------------------------------------------------------------------------------
-Rect get_track_selection_all(Mat &image){
+/*Rect get_track_selection_all(Mat &image){
 
 	vector<vector<Point>> contours;
 	vector<Vec4i> hierarchy;
@@ -133,6 +136,30 @@ Rect get_track_selection_all(Mat &image){
 	imshow("get_track_selection",dest_image);  
 	return rect;
 
+}*/
+Rect get_track_selection_all(Mat &image){
+
+	int rows=image.rows;
+	int cols=image.cols;
+	vector<Point> all_contours;
+	Rect rect;//追踪区域
+
+	for (int i = 0; i < rows; i++){  
+		for (int j = 0; j < cols; j++){
+			if(image.at<uchar>(i,j)>0){
+				Point x;
+				x.x=j;
+				x.y=i;
+				all_contours.push_back(x);
+			}
+		}
+	} 
+
+	if(!all_contours.empty()){
+		rect = boundingRect(all_contours); 
+	}
+	cout<<rect<<endl;
+	return rect;
 }
 
 //-------------------------------------------------------------------------------------------------
