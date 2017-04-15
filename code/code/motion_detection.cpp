@@ -200,7 +200,7 @@ Rect get_track_selection(Mat &image)
 				Scalar(255, 0, 255),  
 				Scalar(0, 255, 255)  
 			};  
-			int clusterCount=1;//聚类大小
+			int clusterCount=3;//聚类大小
 			int* clusterIdxArr =  new int[clusterCount];
 			double* clusterIdxDis =  new double[clusterCount];//保存平均距离
 			clusterCount = MIN(clusterCount, point_count); 
