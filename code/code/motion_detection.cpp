@@ -159,7 +159,10 @@ Rect get_track_selection_all(Mat &image){
 
 	if(!all_contours.empty()){
 		rect = boundingRect(all_contours); 
+		rectangle(image, cvPoint(rect.x, rect.y), cvPoint(rect.x + rect.width, rect.y + rect.height),CV_RGB(255,255, 255), 1, 8, 0);
 	}
+
+	if(debug) imshow("改进三帧差法",image);
 	return rect;
 }
 
@@ -194,13 +197,13 @@ Rect get_track_selection(Mat &image)
 
 			Scalar colorTab[] =     //因为最多只有5类，所以最多也就给5个颜色  
 			{  
-				Scalar(0, 0, 255),  
+				Scalar(255, 255, 255),  
 				Scalar(0, 255, 0),  
 				Scalar(255, 100, 100),  
 				Scalar(255, 0, 255),  
 				Scalar(0, 255, 255)  
 			};  
-			int clusterCount=3;//聚类大小
+			int clusterCount=1;//聚类大小
 			int* clusterIdxArr =  new int[clusterCount];
 			double* clusterIdxDis =  new double[clusterCount];//保存平均距离
 			clusterCount = MIN(clusterCount, point_count); 
@@ -309,7 +312,8 @@ Rect get_track_selection(Mat &image)
 
 		}
 	}  
-	imshow("get_track_selection",dest_image);  
+	if(debug) imshow("背景建模法",dest_image);
+
 	return rect;
 }  
 

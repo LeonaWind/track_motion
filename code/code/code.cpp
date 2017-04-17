@@ -13,7 +13,7 @@ using namespace std;
 int vmin = 10;
 int vmax = 256;
 int smin = 60;
-bool debug=true;
+bool debug=false;
 
 const char* keys =
 {
@@ -30,6 +30,11 @@ int main( int argc, const char** argv )
 	clock_t start, finish,detection_time,tracking_time,total_start,total_finish;//用于计算时间复杂度
 	double duration,detection_duration,tracking_duration,total_duration;
 
+	//截屏
+	//int sframe1=5,sframe2=90,sframe3=900;//倒车入库
+	//int sframe1=6,sframe2=80,sframe3=150;//花样滑冰
+	//int sframe1=6,sframe2=72,sframe3=140;//骑自行车
+
 	cout<<"***************请输入您的选择*****************"<<endl;
 	cout<<"1--打开电脑摄像头"<<endl;
 	cout<<"2--打开测试视频"<<endl;
@@ -45,6 +50,7 @@ int main( int argc, const char** argv )
 	cout<<"其他键--退出"<<endl;
 	cout<<"**********************************************"<<endl;
 	tracking_choice=getchar();
+	getchar();
 
 	if(choice == '1'){
 		capture_flag=1;
@@ -86,7 +92,7 @@ int main( int argc, const char** argv )
 	VideoCapture video_capture;
 	long total_frame_num = 0;
 	if(capture_flag == 2){
-		video_capture.open("G:/毕设/test1.mp4");
+		video_capture.open("G:/毕设/data/test.mp4");
 		total_frame_num = video_capture.get(CV_CAP_PROP_FRAME_COUNT);
 		double rate = video_capture.get(CV_CAP_PROP_FPS);
 		delay = 1;//两帧间的间隔时间:
@@ -97,14 +103,13 @@ int main( int argc, const char** argv )
 			return -1;
 		}
 		cout<<"******************基本信息********************"<<endl;
-		cout<<"帧率"<<delay<<endl;
 		cout<<"整个视频共"<<total_frame_num<<"帧"<<endl;
 		cout<<"**********************************************"<<endl;
 	}
 
 	//打开测试相片序列
-	string pic_path="G:\\毕设\\Skater\\img\\";
-	int max_pic=124;
+	string pic_path="G:\\毕设\\data\\Surfer\\img\\";
+	int max_pic=376;
 	if(capture_flag == 3){
 		delay = 1;//两帧间的间隔时间:
 		current_frame = 1;
@@ -149,6 +154,7 @@ int main( int argc, const char** argv )
 
 		if( !pre_frame.empty())
 		{
+			imshow("原视频",pre_frame);
 			if(debug) {
 				imshow("current_frame",pre_frame);
 				cout<<"这是第"<<current_frame<<"帧"<<endl;
@@ -187,6 +193,7 @@ int main( int argc, const char** argv )
 				if(track_window_temp.width>0&&track_window_temp.height>0){
 					if(tracking_flag == 1){//camshift运动追踪 
 						track_window=track_window_temp;
+						if(debug)cout<<"track_window"<<track_window<<endl;
 					}else if(tracking_flag == 2){//KCF运动跟踪
 						tracker.init(track_window_temp, image);//Rect(xMin, yMin, width, height)
 					}
@@ -194,19 +201,19 @@ int main( int argc, const char** argv )
 				if(debug) detection_time=clock();
 			}
 
-			if(tracking_flag == 1){//camshift运动追踪 
-				if(current_frame>3){
-				trackBox=motion_tracking(track_window,image);
-				ellipse( pre_frame, trackBox, Scalar(255,0,0), 3, CV_AA );
-				imshow( "CamShift Demo", pre_frame );
-				}
-			}else if(tracking_flag == 2){//KCF运动跟踪
-				if(current_frame>3){
+			if(current_frame>3){
+				if(tracking_flag == 1){//camshift运动追踪 
+					trackBox=motion_tracking(track_window,image);
+					ellipse( pre_frame, trackBox, Scalar(255,0,0), 3, CV_AA );
+					imshow( "camshift运动跟踪结果", pre_frame );
+					if(debug)cout<<"track_window"<<track_window<<endl;
+				}else if(tracking_flag == 2){//KCF运动跟踪
 					result = tracker.update(image);
 					rectangle(pre_frame, Point(result.x, result.y), Point(result.x + result.width, result.y + result.height), Scalar(0, 255, 255), 1, 8);
-					imshow( "KCF Demo", pre_frame );
+					imshow( "KCF运动跟踪结果", pre_frame );
 				}
 			}
+
 			if(debug) tracking_time=clock();
 
 			++current_frame;//图片数+1
@@ -237,6 +244,12 @@ int main( int argc, const char** argv )
 			cout << "detection_duration=" << detection_duration<<endl;
 			cout << "tracking_duration=" << tracking_duration<<endl;
 		}
+
+		//if(current_frame ==sframe1||current_frame ==sframe2||current_frame ==sframe3){
+		//	cout<<"截图"<<endl;
+		//	getchar(); 
+		//}
+
 	}
 
 

@@ -19,6 +19,7 @@ RotatedRect motion_tracking(Rect &track_window,Mat image){
 	const float* phranges = hranges;
 	int _vmin = vmin, _vmax = vmax;
 
+	if(debug)cout<<"motion_tracking track_window"<<track_window<<endl;
 	if(track_window.width>0&&track_window.height>0){
 		cvtColor(image, hsv, COLOR_BGR2HSV);//颜色空间转换函数,将RGB颜色转向HSV
 		//inRange函数的功能是检查输入数组每个元素大小是否在2个给定数值之间，可以有多通道,mask保存0通道的最小值，也就是h分量
