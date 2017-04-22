@@ -6,6 +6,11 @@
 #include <stdlib.h>
 #include <iomanip>
 #include <cxcore.h>
+#include <string>  
+#include <list>  
+#include <vector>  
+#include <map>  
+#include <stack>  
 using namespace cv;
 using namespace std;
 
@@ -16,5 +21,6 @@ Rect rectA_intersect_rectB(Rect rectA, Rect rectB);//求两个区域的交叉部分
 Rect frame3_diff_motion_detection(Mat image_gray_pre,Mat image_gray,Mat image_gray_next,Mat &background_gray_cv32f);//改进三帧差法检测运动物体
 void mat_and(Mat src1,Mat src2,Mat &dst);
 void mat_or(Mat src1,Mat src2,Mat &dst);
+void icvprCcaBySeedFill(Mat& _binImg,Mat& _lableImg);
 
 #endif

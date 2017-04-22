@@ -13,7 +13,7 @@ using namespace std;
 int vmin = 10;
 int vmax = 256;
 int smin = 60;
-bool debug=false;
+bool debug=true;
 
 const char* keys =
 {
@@ -41,16 +41,18 @@ int main( int argc, const char** argv )
 	cout<<"3--打开测试相片序列"<<endl;
 	cout<<"其他键--退出"<<endl;
 	cout<<"**********************************************"<<endl;
-	choice=getchar();
-	getchar();
+	//choice=getchar();
+	//getchar();
+	choice='3';
 
 	cout<<"***************请选择运动跟踪方法*****************"<<endl;
 	cout<<"1--CamShift"<<endl;
 	cout<<"2--KCF"<<endl;
 	cout<<"其他键--退出"<<endl;
 	cout<<"**********************************************"<<endl;
-	tracking_choice=getchar();
-	getchar();
+	//tracking_choice=getchar();
+	//getchar();
+	tracking_choice='2';
 
 	if(choice == '1'){
 		capture_flag=1;
@@ -108,8 +110,8 @@ int main( int argc, const char** argv )
 	}
 
 	//打开测试相片序列
-	string pic_path="G:\\毕设\\data\\Surfer\\img\\";
-	int max_pic=376;
+	string pic_path="G:\\毕设\\data\\Subway\\img\\";
+	int max_pic=175;
 	if(capture_flag == 3){
 		delay = 1;//两帧间的间隔时间:
 		current_frame = 1;
@@ -148,7 +150,7 @@ int main( int argc, const char** argv )
 			char s[10];
 			sprintf(s,"%0.4d",current_frame);
 			String pic_path_temp=pic_path+s+".jpg";
-			cout<<"pic_path_temp:"<<pic_path_temp<<endl;
+			if(debug) cout<<"pic_path_temp:"<<pic_path_temp<<endl;
 			pre_frame = imread(pic_path_temp);
 		}
 
@@ -201,7 +203,7 @@ int main( int argc, const char** argv )
 				if(debug) detection_time=clock();
 			}
 
-			if(current_frame>3){
+			/*if(current_frame>3){
 				if(tracking_flag == 1){//camshift运动追踪 
 					trackBox=motion_tracking(track_window,image);
 					ellipse( pre_frame, trackBox, Scalar(255,0,0), 3, CV_AA );
@@ -212,7 +214,7 @@ int main( int argc, const char** argv )
 					rectangle(pre_frame, Point(result.x, result.y), Point(result.x + result.width, result.y + result.height), Scalar(0, 255, 255), 1, 8);
 					imshow( "KCF运动跟踪结果", pre_frame );
 				}
-			}
+			}*/
 
 			if(debug) tracking_time=clock();
 
