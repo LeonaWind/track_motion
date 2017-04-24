@@ -37,7 +37,7 @@ Rect frame3_diff_motion_detection(Mat image_gray_pre,Mat image_gray,Mat image_gr
 
 	//if(debug) imshow("形态学处理前",diff_gray);
 	//进行分割
-	Mat seed_fill(rows,cols,CV_8UC1);
+	Mat seed_fill;
 	icvprCcaBySeedFill(diff_gray,seed_fill);
 	//if(debug) imshow("分割结果",seed_fill);
 
@@ -489,6 +489,9 @@ void icvprCcaBySeedFill(Mat& _binImg,Mat& _lableImg)
 				show_img.at<cv::Vec3b>(i, j)[0]=show_color[data[j]].val[0];
 				show_img.at<cv::Vec3b>(i, j)[1]=show_color[data[j]].val[1];
 				show_img.at<cv::Vec3b>(i, j)[2]=show_color[data[j]].val[2];
+			}
+			else{
+				_lableImg.at<int>(i, j) = 0; 
 			}
 		}
 

@@ -6,6 +6,7 @@
 #include"motion_detection.h"
 #include"motion_tracking.h"
 #include "kcftracker.h"
+#include"motion_segment.h"
 
 using namespace cv;
 using namespace std;
