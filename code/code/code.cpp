@@ -191,7 +191,17 @@ int main( int argc, const char** argv )
 			if(current_frame==3){
 				if(debug) cout<<"帧差法检测"<<endl;
 				image3=image_gray.clone();//获取第三张图
-				Rect track_window_temp = frame3_diff_motion_detection(image1,image2,image3,background_gray);//运动检测,返回跟踪区域
+				Mat detection_image = frame3_diff_motion_detection(image1,image2,image3,background_gray);//运动检测,返回跟踪区域
+				Mat segment_image = motion_segment(pre_frame);
+				vector<Rect> track_rect=get_track_selection_many(detection_image,segment_image);
+				int max_area=0;
+				Rect track_window_temp;
+				for (vector<Rect>::const_iterator iter = track_rect.begin(); iter != track_rect.end(); iter++){
+					if((*iter).area()>max_area){
+						max_area=(*iter).area();
+						track_window_temp=(*iter);
+					}
+				}
 
 				if(track_window_temp.width>0&&track_window_temp.height>0){
 					if(tracking_flag == 1){//camshift运动追踪 
@@ -204,7 +214,7 @@ int main( int argc, const char** argv )
 				if(debug) detection_time=clock();
 			}
 
-			/*if(current_frame>3){
+			if(current_frame>3){
 				if(tracking_flag == 1){//camshift运动追踪 
 					trackBox=motion_tracking(track_window,image);
 					ellipse( pre_frame, trackBox, Scalar(255,0,0), 3, CV_AA );
@@ -215,7 +225,7 @@ int main( int argc, const char** argv )
 					rectangle(pre_frame, Point(result.x, result.y), Point(result.x + result.width, result.y + result.height), Scalar(0, 255, 255), 1, 8);
 					imshow( "KCF运动跟踪结果", pre_frame );
 				}
-			}*/
+			}
 
 			if(debug) tracking_time=clock();
 

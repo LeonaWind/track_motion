@@ -391,3 +391,39 @@ return status[i] && ((abs(points1[i].x - points2[i].x) + abs(points1[i].y - poin
 		rectangle(dest_image, cvPoint(rect.x, rect.y), cvPoint(rect.x + rect.width, rect.y + rect.height),CV_RGB(255,255, 255), 1, 8, 0);
 		}
 		*/
+
+
+/*Rect get_track_selection_all(Mat &image){
+
+vector<vector<Point>> contours;
+vector<Vec4i> hierarchy;
+Mat dest_image=Mat::zeros(image.rows,image.cols,CV_8UC3);
+int count_max=1000;//最多保存点
+int point_count=0;
+CvRect rect;//追踪区域
+
+findContours(image, contours, hierarchy, CV_RETR_EXTERNAL, CV_CHAIN_APPROX_SIMPLE); // 查找轮廓                
+Scalar color(rand()&255,rand()&255,rand()&255);
+drawContours(dest_image, contours,-1,color,3);// 填充所有轮廓 
+
+vector<Point> all_contours;
+for (vector<vector<Point>>::const_iterator iter = contours.begin(); iter != contours.end(); iter++)
+{
+for (vector<Point>::const_iterator inner_iter = (*iter).begin(); inner_iter != (*iter).end(); inner_iter++){
+Point x;
+x.x=(*inner_iter).x;
+x.y=(*inner_iter).y;
+all_contours.push_back(x);
+point_count++;
+if(point_count>=count_max) break;
+}
+}  
+if(!all_contours.empty()){
+rect = boundingRect(all_contours); 
+rectangle(dest_image, cvPoint(rect.x, rect.y), cvPoint(rect.x + rect.width, rect.y + rect.height),CV_RGB(255,255, 255), 1, 8, 0);
+}
+
+imshow("get_track_selection",dest_image);  
+return rect;
+
+}*/
