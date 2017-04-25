@@ -27,6 +27,27 @@
     <ClInclude Include="motion_detection.h">
       <Filter>头文件</Filter>
     </ClInclude>
+    <ClInclude Include="ffttools.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="fhog.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="kcftracker.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="labdata.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="recttools.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="tracker.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="motion_segment.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="code.cpp">
@@ -39,6 +60,15 @@
       <Filter>源文件</Filter>
     </ClCompile>
     <ClCompile Include="temp.cpp">
+      <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="fhog.cpp">
+      <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="kcftracker.cpp">
+      <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="motion_segment.cpp">
       <Filter>源文件</Filter>
     </ClCompile>
   </ItemGroup>
