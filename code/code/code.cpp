@@ -182,18 +182,19 @@ int main( int argc, const char** argv )
 			}
 
 			//改进三帧差法检测运动物体
-			if(current_frame==1){
+			if(current_frame%30==1){
 				image1=image_gray.clone();//获取第一张图
 			}
-			if(current_frame==2){
+			if(current_frame%30==2){
 				image2=image_gray.clone();//获取第二张图
 			}
-			if(current_frame==3){
+			if(current_frame%30==3){
 				if(debug) cout<<"帧差法检测"<<endl;
 				image3=image_gray.clone();//获取第三张图
 				Mat detection_image = frame3_diff_motion_detection(image1,image2,image3,background_gray);//运动检测,返回跟踪区域
-				Mat segment_image = motion_segment(pre_frame);
-				vector<Rect> track_rect=get_track_selection_many(detection_image,segment_image);
+				//Mat segment_image = motion_segment(pre_frame);
+				//vector<Rect> track_rect=get_track_selection_many(detection_image,segment_image);
+				vector<Rect> track_rect=get_track_selection_many_by_detection(detection_image);
 				int max_area=0;
 				Rect track_window_temp;
 				for (vector<Rect>::const_iterator iter = track_rect.begin(); iter != track_rect.end(); iter++){

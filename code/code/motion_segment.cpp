@@ -10,44 +10,46 @@ Mat motion_segment(Mat image){
 
 	// Display the color image
 	//resize(image, image, Size(), 0.7, 0.7);
-	namedWindow("Original image");
-	imshow("Original image",image);
+	//namedWindow("Original image");
+	//imshow("Original image",image);
 
 	// Identify image pixels with object
 	Mat binary;
 	cvtColor(image,binary,COLOR_BGRA2GRAY);
 	threshold(binary,binary,70,255,THRESH_BINARY_INV);//阈值分割原图的灰度图，获得二值图像
 	// Display the binary image
-	namedWindow("binary image");
-	imshow("binary image",binary);
-	waitKey();
+	//namedWindow("binary image");
+	//imshow("binary image",binary);
+	//waitKey();
 
 	// CLOSE operation
 	Mat element5(3,3,CV_8U,Scalar(1));//5*5正方形，8位uchar型，全1结构元素
 	Mat fg1;
-	morphologyEx(binary, fg1,MORPH_CLOSE,element5,Point(-1,-1),1);// 闭运算填充物体内细小空洞、连接邻近物体
+	//morphologyEx(binary, fg1,MORPH_CLOSE,element5,Point(-1,-1),1);// 闭运算填充物体内细小空洞、连接邻近物体
+	morphologyEx(binary, fg1,MORPH_CLOSE,element5);
 
 	// Display the foreground image
-	namedWindow("Foreground Image");
-	imshow("Foreground Image",fg1);
-	waitKey();
+	//namedWindow("Foreground Image");
+	//imshow("Foreground Image",fg1);
+	//waitKey();
 
 	// Identify image pixels without objects
 
 	Mat bg1;
-	dilate(binary,bg1,Mat(),Point(-1,-1),4);//膨胀4次，锚点为结构元素中心点
+	//dilate(binary,bg1,Mat(),Point(-1,-1),4);//膨胀4次，锚点为结构元素中心点
+	dilate(binary,bg1,Mat());
 	threshold(bg1,bg1,1,128,THRESH_BINARY_INV);//>=1的像素设置为128（即背景）
 	// Display the background image
-	namedWindow("Background Image");
-	imshow("Background Image",bg1);
-	waitKey();
+	//namedWindow("Background Image");
+	//imshow("Background Image",bg1);
+	//waitKey();
 
 	//Get markers image
 
 	Mat markers1 = fg1 + bg1; //使用Mat类的重载运算符+来合并图像。
-	namedWindow("markers Image");
-	imshow("markers Image",markers1);
-	waitKey();
+	//namedWindow("markers Image");
+	//imshow("markers Image",markers1);
+	//waitKey();
 
 	// Apply watershed segmentation
 
@@ -60,7 +62,7 @@ Mat motion_segment(Mat image){
 	result=segmenter1.getSegmentation();
 	namedWindow("Segmentation1");
 	imshow("Segmentation1",result);
-	waitKey();
+	waitKey(30);
 
 	return result;
 }
@@ -105,7 +107,8 @@ vector<Rect> icvprCcaBySeedFill(Mat& _binImg,Mat& _lableImg)
 
 					// pop the top pixel  
 					neighborPixels.pop() ;  
-					if(curX==0||curY==0) continue;
+
+					if(curX==0||curY==0||curX==rows||curY==cols) continue;
 
 					// push the 4-neighbors (foreground pixels)  
 					if (_lableImg.at<int>(curX, curY-1) == sign){// left pixel  
@@ -126,13 +129,12 @@ vector<Rect> icvprCcaBySeedFill(Mat& _binImg,Mat& _lableImg)
 	} 
 	_lableImg.convertTo(_lableImg, CV_8UC1);
 	imshow("_lableImg",_lableImg);
-	waitKey();
-
-	cout<<label<<endl;
+	waitKey(30);
+	cout<<"总label"<<label<<endl;
 
 	vector<Point> all_contours;
 	Rect rect;//追踪区域
-	for(int k=0;k<=label;k++){
+	for(int k=1;k<=label;k++){
 		for (int i = 0; i < rows; i++){  
 			for (int j = 0; j < cols; j++){
 				if(_lableImg.at<uchar>(i,j)==k){
@@ -156,7 +158,7 @@ vector<Rect> icvprCcaBySeedFill(Mat& _binImg,Mat& _lableImg)
 		all_contours.clear();
 	}
 	imshow("_lableImg2",_lableImg);
-	waitKey();
+	waitKey(30);
 
 	return track_rect;
 }
@@ -184,11 +186,20 @@ vector<Rect> get_track_selection_many(Mat detection_image,Mat segment_image){
 		}
 	} 
 	imshow("inter",inter);
-	waitKey();
+	waitKey(30);
 
 	//画方框
 	Mat label;
 	track_rect=icvprCcaBySeedFill(inter,label);
+	return track_rect;
+
+}
+
+vector<Rect> get_track_selection_many_by_detection(Mat detection_image){
+	//画方框
+	Mat label;
+	vector<Rect> track_rect;
+	track_rect=icvprCcaBySeedFill(detection_image,label);
 	return track_rect;
 
 }
