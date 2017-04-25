@@ -8,7 +8,7 @@ extern bool debug;
 // parameter:第k-1帧图像Mat image_gray_pre，第k帧图像Mat image_gray，第k+1帧图像Mat image_gray_next
 // return: 被跟踪区域Rect selection
 //-------------------------------------------------------------------------------------------------
-Rect frame3_diff_motion_detection(Mat image_gray_pre,Mat image_gray,Mat image_gray_next,Mat &background_gray_cv32f){
+Mat frame3_diff_motion_detection(Mat image_gray_pre,Mat image_gray,Mat image_gray_next,Mat &background_gray_cv32f){
 	int rows=image_gray.rows;
 	int cols=image_gray.cols;
 	Mat output(rows,cols,CV_8UC1);//检测出的运动图像
@@ -33,13 +33,6 @@ Rect frame3_diff_motion_detection(Mat image_gray_pre,Mat image_gray,Mat image_gr
 			//cout<<(int)diff_gray.at<uchar>(i,j)<<" ";
 		}    
 	} 
-
-
-	//if(debug) imshow("形态学处理前",diff_gray);
-	//进行分割
-	Mat seed_fill;
-	icvprCcaBySeedFill(diff_gray,seed_fill);
-	//if(debug) imshow("分割结果",seed_fill);
 
 	//3.形态学处理
 	Mat element=getStructuringElement(MORPH_RECT,Size(15,15));
@@ -73,12 +66,15 @@ Rect frame3_diff_motion_detection(Mat image_gray_pre,Mat image_gray,Mat image_gr
 
 	//8.形态学处理
 	morphologyEx(diff_gray,output,MORPH_CLOSE,element);
-	//if(debug) imshow("检测最后结果",output);
+	if(debug) imshow("检测最后结果",output);
 
 	//imshow("image_gray_canny",image_gray_canny);
 	//imshow("diff_gray",diff_gray);
-	Rect selection = get_track_selection_all(output); //简单做法获取追踪区域
-	return selection;
+	//Rect selection = get_track_selection_all(output); //简单做法获取追踪区域
+	//return selection;
+
+	return output;
+
 
 }
 
@@ -114,40 +110,6 @@ Rect background_motion_detection(Mat &image_gray,Mat &background_gray_cv32f){
 // parameter:输入图像Mat image
 // return: 被跟踪区域Rect selection
 //-------------------------------------------------------------------------------------------------
-/*Rect get_track_selection_all(Mat &image){
-
-vector<vector<Point>> contours;
-vector<Vec4i> hierarchy;
-Mat dest_image=Mat::zeros(image.rows,image.cols,CV_8UC3);
-int count_max=1000;//最多保存点
-int point_count=0;
-CvRect rect;//追踪区域
-
-findContours(image, contours, hierarchy, CV_RETR_EXTERNAL, CV_CHAIN_APPROX_SIMPLE); // 查找轮廓                
-Scalar color(rand()&255,rand()&255,rand()&255);
-drawContours(dest_image, contours,-1,color,3);// 填充所有轮廓 
-
-vector<Point> all_contours;
-for (vector<vector<Point>>::const_iterator iter = contours.begin(); iter != contours.end(); iter++)
-{
-for (vector<Point>::const_iterator inner_iter = (*iter).begin(); inner_iter != (*iter).end(); inner_iter++){
-Point x;
-x.x=(*inner_iter).x;
-x.y=(*inner_iter).y;
-all_contours.push_back(x);
-point_count++;
-if(point_count>=count_max) break;
-}
-}  
-if(!all_contours.empty()){
-rect = boundingRect(all_contours); 
-rectangle(dest_image, cvPoint(rect.x, rect.y), cvPoint(rect.x + rect.width, rect.y + rect.height),CV_RGB(255,255, 255), 1, 8, 0);
-}
-
-imshow("get_track_selection",dest_image);  
-return rect;
-
-}*/
 Rect get_track_selection_all(Mat &image){
 
 	int rows=image.rows;
@@ -394,107 +356,4 @@ void mat_or(Mat src1,Mat src2,Mat &dst){
 			if(dst.at<uchar>(i,j)==1) dst.at<uchar>(i,j)=255;
 		}
 	} 
-}
-
-//-------------------------------------------------------------------------------------------------
-// function: mat_or
-// brief: 两个矩阵进行或运算
-// parameter:输入图像Mat src1,Mat src2，与运算结果Mat &dst
-// return: 空，或运算结果保存在dst中
-//-------------------------------------------------------------------------------------------------
-void icvprCcaBySeedFill(Mat& _binImg,Mat& _lableImg)  
-{  
-	// connected component analysis (4-component)  
-	// use seed filling algorithm  
-	// 1. begin with a foreground pixel and push its foreground neighbors into a stack;  
-	// 2. pop the top pixel on the stack and label it with the same label until the stack is empty  
-	//   
-	// foreground pixel: _binImg(x,y) = 1  
-	// background pixel: _binImg(x,y) = 0  
-
-
-	if (_binImg.empty() ||  
-		_binImg.type() != CV_8UC1)  
-	{  
-		return ;  
-	}  
-
-	_binImg.convertTo(_lableImg, CV_32SC1) ;  
-
-	int label = 1 ;  // start by 2  
-	int sign=255;
-
-	int rows = _binImg.rows - 1 ;  
-	int cols = _binImg.cols - 1 ;  
-	for (int i = 1; i < rows-1; i++)  
-	{  
-		int* data= _lableImg.ptr<int>(i) ;  
-		for (int j = 1; j < cols-1; j++)  
-		{  
-			if (data[j] == sign)  
-			{  
-				std::stack<std::pair<int,int>> neighborPixels ;     
-				neighborPixels.push(std::pair<int,int>(i,j)) ;     // pixel position: <i,j>  
-				++label;  // begin with a new label  
-				while (!neighborPixels.empty())  
-				{  
-					// get the top pixel on the stack and label it with the same label  
-					std::pair<int,int> curPixel = neighborPixels.top() ;  
-					int curX = curPixel.first ;  
-					int curY = curPixel.second ;  
-					_lableImg.at<int>(curX, curY) = label ;  
-
-					// pop the top pixel  
-					neighborPixels.pop() ;  
-
-					// push the 4-neighbors (foreground pixels)  
-					if (_lableImg.at<int>(curX, curY-1) == sign)  
-					{// left pixel  
-						neighborPixels.push(std::pair<int,int>(curX, curY-1)) ;  
-					}  
-					if (_lableImg.at<int>(curX, curY+1) == sign)  
-					{// right pixel  
-						neighborPixels.push(std::pair<int,int>(curX, curY+1)) ;  
-					}  
-					if (_lableImg.at<int>(curX-1, curY) == sign)  
-					{// up pixel  
-						neighborPixels.push(std::pair<int,int>(curX-1, curY)) ;  
-					}  
-					if (_lableImg.at<int>(curX+1, curY) == sign)  
-					{// down pixel  
-						neighborPixels.push(std::pair<int,int>(curX+1, curY)) ;  
-					}  
-				}         
-			}  
-		}  
-	} 
-	_lableImg.convertTo(_lableImg, CV_8UC1);
-	imshow("_lableImg",_lableImg);
-
-	Mat show_img(rows,cols,CV_8UC3);	
-	Scalar *show_color=new Scalar[label];
-	int show_rows=show_img.rows;
-	int show_cols=show_img.cols;
-	for(int k=0;k<label;k++){
-		show_color[k]=Scalar(rand()&255,rand()&255,rand()&255);
-	}
-	//生成随机颜色
-	//显示结果
-	for (int i = 0;i<show_rows;i++)  
-	{  
-		int* data= _lableImg.ptr<int>(i); 
-		for (int j = 0;j<show_cols;j++)  {  
-			if (data[j] >0&&data[j]<label){
-				cout<<data[j]<<endl;
-				show_img.at<cv::Vec3b>(i, j)[0]=show_color[data[j]].val[0];
-				show_img.at<cv::Vec3b>(i, j)[1]=show_color[data[j]].val[1];
-				show_img.at<cv::Vec3b>(i, j)[2]=show_color[data[j]].val[2];
-			}
-			else{
-				_lableImg.at<int>(i, j) = 0; 
-			}
-		}
-
-	}
-	imshow("show_img",show_img);
 }

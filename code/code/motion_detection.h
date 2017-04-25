@@ -18,9 +18,8 @@ Rect background_motion_detection(Mat &image_gray,Mat &background_gray);//ÔË¶¯¼ì²
 Rect get_track_selection(Mat &image);//»ñÈ¡×·×ÙÇøÓò
 Rect get_track_selection_all(Mat &image);
 Rect rectA_intersect_rectB(Rect rectA, Rect rectB);//ÇóÁ½¸öÇøÓòµÄ½»²æ²¿·Ö
-Rect frame3_diff_motion_detection(Mat image_gray_pre,Mat image_gray,Mat image_gray_next,Mat &background_gray_cv32f);//¸Ä½øÈıÖ¡²î·¨¼ì²âÔË¶¯ÎïÌå
+Mat frame3_diff_motion_detection(Mat image_gray_pre,Mat image_gray,Mat image_gray_next,Mat &background_gray_cv32f);//¸Ä½øÈıÖ¡²î·¨¼ì²âÔË¶¯ÎïÌå
 void mat_and(Mat src1,Mat src2,Mat &dst);
 void mat_or(Mat src1,Mat src2,Mat &dst);
-void icvprCcaBySeedFill(Mat& _binImg,Mat& _lableImg);
 
 #endif
