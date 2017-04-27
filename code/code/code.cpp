@@ -3,6 +3,9 @@
 #include <stdlib.h>
 #include <iomanip>
 #include <cxcore.h>
+#include <thread>
+#include <mutex>
+
 #include"motion_detection.h"
 #include"motion_tracking.h"
 #include "kcftracker.h"
@@ -15,6 +18,8 @@ int vmin = 10;
 int vmax = 256;
 int smin = 60;
 bool debug=true;
+int track_num=0;//追踪的窗口数
+mutex m;//互斥量
 
 const char* keys =
 {
@@ -194,7 +199,10 @@ int main( int argc, const char** argv )
 				Mat detection_image = frame3_diff_motion_detection(image1,image2,image3,background_gray);//运动检测,返回跟踪区域
 				//Mat segment_image = motion_segment(pre_frame);
 				//vector<Rect> track_rect=get_track_selection_many(detection_image,segment_image);
-				vector<Rect> track_rect=get_track_selection_many_by_detection(detection_image);
+				vector<Rect> track_rect=get_track_selection_many_by_detection(detection_image);//获得追踪的区域
+				track_num=track_rect.size();
+
+				//简易做法
 				int max_area=0;
 				Rect track_window_temp;
 				for (vector<Rect>::const_iterator iter = track_rect.begin(); iter != track_rect.end(); iter++){
@@ -212,6 +220,9 @@ int main( int argc, const char** argv )
 						tracker.init(track_window_temp, image);//Rect(xMin, yMin, width, height)
 					}
 				}
+
+				//加入队列并分配
+
 				if(debug) detection_time=clock();
 			}
 

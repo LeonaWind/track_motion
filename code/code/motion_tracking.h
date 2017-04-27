@@ -13,6 +13,8 @@ extern int vmin;
 extern int vmax;
 extern int smin;
 extern bool debug;
+extern int track_num;//追踪的窗口数
+extern mutex m;//互斥量
 
 RotatedRect motion_tracking(Rect &track_window,Mat image);//运动追踪
 
