@@ -18,11 +18,6 @@ extern int smin;
 extern bool debug;
 
 RotatedRect motion_tracking(Rect &track_window,Mat image);//运动追踪
-typedef struct queuet      //队列的结构
-{
- int *front;
- int *rear;
-}queue_t;
 
 class trackThread {
 private:
@@ -50,6 +45,7 @@ public:
 			result.push(a);//放入结果列表
 		}
 	}
+
 	queue<int> get_result(){
 		return result;
 	}
@@ -58,9 +54,11 @@ public:
 		return list;
 	}
 
+
 	void set_list(){
 		int length1=list.size();
 		int length2=result.size();
+
 		for(int i=0;i<length1;i++)
 		{
 			list.pop();

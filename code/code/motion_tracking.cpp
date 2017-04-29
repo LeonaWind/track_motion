@@ -1,7 +1,5 @@
 #include"motion_tracking.h"
 
-extern bool debug;
-
 //-------------------------------------------------------------------------------------------------
 // function: motion_tracking
 // brief: ÔË¶¯×·×Ù

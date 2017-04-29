@@ -245,7 +245,7 @@ int main( int argc, const char** argv )
 					t.join();
 				}
 
-				
+
 				queue<int> result=track_thread.get_result();
 				track_thread.print(result,"结果是：");
 
@@ -253,7 +253,7 @@ int main( int argc, const char** argv )
 				track_thread.set_list();
 				list_temp=track_thread.get_list();
 				track_thread.print(list_temp,"跟新后：");
-				
+
 				if(debug) detection_time=clock();
 			}
 
