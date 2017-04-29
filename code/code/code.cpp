@@ -253,7 +253,7 @@ int main( int argc, const char** argv )
 				track_thread.set_list();
 				list_temp=track_thread.get_list();
 				track_thread.print(list_temp,"¸úĞÂºó£º");
-
+				
 				if(debug) detection_time=clock();
 			}
 
