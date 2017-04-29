@@ -72,9 +72,6 @@ RotatedRect motion_tracking(Rect &track_window,Mat image){
 	}
 }
 
-int thread_test(int num){
-	cout<<"传进来的数是"<<num<<endl;
-	m.lock();        // 进入临界区域
-	track_num--;
-	m.unlock();      // 离开
+void run_thread(trackThread& track_thread){
+	track_thread.thread_test();
 }

@@ -142,6 +142,17 @@ int main( int argc, const char** argv )
 	// Tracker results
 	Rect result;
 
+	//多线程
+	queue<int> list;
+	list.push(1);
+	list.push(2);
+	list.push(3);
+	list.push(4);
+	list.push(5);
+	int list_num=5;
+	int thread_num=5;
+	trackThread track_thread(list_num,list);
+
 	total_start = clock();
 	while(1)
 	{
@@ -168,6 +179,7 @@ int main( int argc, const char** argv )
 				cout<<"这是第"<<current_frame<<"帧"<<endl;
 				cout<<"行"<<pre_frame.rows<<"列"<<pre_frame.cols<<endl;
 			}
+
 			pre_frame.copyTo(image);
 
 			//图像预处理
@@ -221,7 +233,26 @@ int main( int argc, const char** argv )
 					}
 				}
 
-				//加入队列并分配
+				queue<int> list_temp=track_thread.get_list();
+				track_thread.print(list_temp,"原始是：");
+
+				thread threads[5];
+				for(int t=0;t<5;t++){
+					threads[t]=thread(run_thread,ref(track_thread));
+				}
+
+				for(auto& t:threads){
+					t.join();
+				}
+
+				
+				queue<int> result=track_thread.get_result();
+				track_thread.print(result,"结果是：");
+
+				//更新
+				track_thread.set_list();
+				list_temp=track_thread.get_list();
+				track_thread.print(list_temp,"跟新后：");
 
 				if(debug) detection_time=clock();
 			}
@@ -270,6 +301,7 @@ int main( int argc, const char** argv )
 			cout << "tracking_duration=" << tracking_duration<<endl;
 		}
 
+		//截图
 		//if(current_frame ==sframe1||current_frame ==sframe2||current_frame ==sframe3){
 		//	cout<<"截图"<<endl;
 		//	getchar(); 
