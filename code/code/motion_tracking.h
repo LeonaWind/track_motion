@@ -66,14 +66,15 @@ public:
 	}
 
 	void update(vector<Rect> r,Mat pic){
-		
+		//清空队列
 		unique_lock<mutex> list_lock(list_mutex);
-		int length1=list.size();
-		for(int i=0;i<length1;i++){//清空队列
+		int length=list.size();
+		for(int i=0;i<length;i++){
 			list.pop();
 		}
 
-		for(vector<Rect>::iterator iter = r.begin(); iter != r.end(); iter++){//重新放入队列
+		//重新放入队列
+		for(vector<Rect>::iterator iter = r.begin(); iter != r.end(); iter++){
 			KCFTracker tracker(HOG, FIXEDWINDOW, MULTISCALE, LAB);
 			if((*iter).width>0&&(*iter).height>0){
 				tracker.init((*iter), pic);

@@ -144,7 +144,7 @@ int main( int argc, const char** argv )
 
 	//多线程
 	int list_num=5;
-	int thread_num=5;
+	int thread_num=3;
 	trackThread track_thread(list_num,HOG, FIXEDWINDOW, MULTISCALE, LAB);
 
 	total_start = clock();
@@ -209,12 +209,12 @@ int main( int argc, const char** argv )
 				track_num=track_rect.size();
 
 				//跟新
-				vector<Rect> track_rect_test;
-				int x=0;
-				for(vector<Rect>::iterator iter=track_rect.begin();iter!=track_rect.end()&&x<3;iter++,x++){
-					track_rect_test.push_back((*iter));
-				}
-				track_thread.update(track_rect_test,image);
+				//vector<Rect> track_rect_test;
+				//int x=0;
+				//for(vector<Rect>::iterator iter=track_rect.begin();iter!=track_rect.end()&&x<3;iter++,x++){
+				//	track_rect_test.push_back((*iter));
+				//}
+				track_thread.update(track_rect,image);
 
 
 				/*
@@ -243,15 +243,24 @@ int main( int argc, const char** argv )
 
 			/*****************************运动跟踪**********************/
 
-				thread threads[3];
-				track_thread.update_image(image,pre_frame);
-				for(int t=0;t<3;t++){
-					threads[t]=thread(run_thread,ref(track_thread));
-				}
+			    //track_num是需要追踪的总数，thread_num是线程总数
+				int count_track=track_num;//计算已经追踪的窗口数
+				track_thread.update_image(image,pre_frame);//跟新图片
 
-				for(auto& t:threads){
-					t.join();
+				while(count_track>0){
+					//每次执行thread_num个
+					thread threads[3];
+					for(int t=0;t<thread_num;t++){
+						threads[t]=thread(run_thread,ref(track_thread));
+					}
+					for(auto& t:threads){//等待执行完
+						t.join();
+					}
+					count_track-=thread_num;
 				}
+				
+
+				
 
 				//更新
 				track_thread.set_list();
