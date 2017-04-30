@@ -17,7 +17,7 @@ using namespace std;
 int vmin = 10;
 int vmax = 256;
 int smin = 60;
-bool debug=true;
+bool debug=false;
 int track_num=0;//追踪的窗口数
 mutex m;//互斥量
 
@@ -138,20 +138,14 @@ int main( int argc, const char** argv )
 	bool MULTISCALE = true;
 	bool SILENT = true;
 	bool LAB = false;
-	KCFTracker tracker(HOG, FIXEDWINDOW, MULTISCALE, LAB);
+	//KCFTracker tracker(HOG, FIXEDWINDOW, MULTISCALE, LAB);
 	// Tracker results
 	Rect result;
 
 	//多线程
-	queue<int> list;
-	list.push(1);
-	list.push(2);
-	list.push(3);
-	list.push(4);
-	list.push(5);
 	int list_num=5;
 	int thread_num=5;
-	trackThread track_thread(list_num,list);
+	trackThread track_thread(list_num,HOG, FIXEDWINDOW, MULTISCALE, LAB);
 
 	total_start = clock();
 	while(1)
@@ -174,9 +168,9 @@ int main( int argc, const char** argv )
 		if( !pre_frame.empty())
 		{
 			imshow("原视频",pre_frame);
+			cout<<"这是第"<<current_frame<<"帧"<<endl;
 			if(debug) {
 				imshow("current_frame",pre_frame);
-				cout<<"这是第"<<current_frame<<"帧"<<endl;
 				cout<<"行"<<pre_frame.rows<<"列"<<pre_frame.cols<<endl;
 			}
 
@@ -214,6 +208,16 @@ int main( int argc, const char** argv )
 				vector<Rect> track_rect=get_track_selection_many_by_detection(detection_image);//获得追踪的区域
 				track_num=track_rect.size();
 
+				//跟新
+				vector<Rect> track_rect_test;
+				int x=0;
+				for(vector<Rect>::iterator iter=track_rect.begin();iter!=track_rect.end()&&x<3;iter++,x++){
+					track_rect_test.push_back((*iter));
+				}
+				track_thread.update(track_rect_test,image);
+
+
+				/*
 				//简易做法
 				int max_area=0;
 				Rect track_window_temp;
@@ -232,12 +236,16 @@ int main( int argc, const char** argv )
 						tracker.init(track_window_temp, image);//Rect(xMin, yMin, width, height)
 					}
 				}
+				*/
 
-				queue<int> list_temp=track_thread.get_list();
-				track_thread.print(list_temp,"原始是：");
+				if(debug) detection_time=clock();
+			}
 
-				thread threads[5];
-				for(int t=0;t<5;t++){
+			/*****************************运动跟踪**********************/
+
+				thread threads[3];
+				track_thread.update_image(image,pre_frame);
+				for(int t=0;t<3;t++){
 					threads[t]=thread(run_thread,ref(track_thread));
 				}
 
@@ -245,18 +253,10 @@ int main( int argc, const char** argv )
 					t.join();
 				}
 
-
-				queue<int> result=track_thread.get_result();
-				track_thread.print(result,"结果是：");
-
 				//更新
 				track_thread.set_list();
-				list_temp=track_thread.get_list();
-				track_thread.print(list_temp,"跟新后：");
 
-				if(debug) detection_time=clock();
-			}
-
+			/*
 			if(current_frame>3){
 				if(tracking_flag == 1){//camshift运动追踪 
 					trackBox=motion_tracking(track_window,image);
@@ -269,6 +269,7 @@ int main( int argc, const char** argv )
 					imshow( "KCF运动跟踪结果", pre_frame );
 				}
 			}
+			*/
 
 			if(debug) tracking_time=clock();
 
