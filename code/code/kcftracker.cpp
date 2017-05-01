@@ -225,7 +225,6 @@ cv::Rect KCFTracker::update(cv::Mat image)
     return _roi;
 }
 
-
 // Detect object in the current frame.
 cv::Point2f KCFTracker::detect(cv::Mat z, cv::Mat x, float &peak_value)
 {
@@ -516,4 +515,8 @@ float KCFTracker::subPixelPeak(float left, float center, float right)
         return 0;
     
     return 0.5 * (right - left) / divisor;
+}
+
+cv::Rect KCFTracker::getRect(){
+	return _roi;
 }
