@@ -16,9 +16,7 @@ Mat motion_segment(Mat image){
 	// Identify image pixels with object
 	Mat binary;
 	cvtColor(image,binary,COLOR_BGRA2GRAY);
-	threshold(binary,binary,70,255,THRESH_BINARY_INV);//阈值分割原图的灰度图，获得二值图像
-	// Display the binary image
-	//namedWindow("binary image");
+	threshold(binary,binary,100,255,THRESH_BINARY_INV);//阈值分割原图的灰度图，获得二值图像
 	//imshow("binary image",binary);
 	//waitKey();
 
@@ -60,9 +58,10 @@ Mat motion_segment(Mat image){
 	// Display segmentation result
 	//将修改后的标记图markers转换为可显示的8位灰度图并返回分割结果（白色为前景，灰色为背景，0为边缘）
 	result=segmenter1.getSegmentation();
-	namedWindow("Segmentation1");
-	imshow("Segmentation1",result);
-	waitKey(30);
+	Mat element=getStructuringElement(MORPH_RECT,Size(15,15));
+	morphologyEx(result,result,MORPH_CLOSE,element);
+	//imshow("Segmentation1",result);
+	//waitKey(30);
 
 	return result;
 }
@@ -128,8 +127,8 @@ vector<Rect> icvprCcaBySeedFill(Mat& _binImg,Mat& _lableImg)
 		}  
 	} 
 	_lableImg.convertTo(_lableImg, CV_8UC1);
-	imshow("_lableImg",_lableImg);
-	waitKey(30);
+	//imshow("_lableImg",_lableImg);
+	//waitKey(30);
 	cout<<"总label"<<label<<endl;
 
 	vector<Point> all_contours;
@@ -149,7 +148,7 @@ vector<Rect> icvprCcaBySeedFill(Mat& _binImg,Mat& _lableImg)
 		if(!all_contours.empty()){
 			rect = boundingRect(all_contours); 
 			cout<<k<<"个面积"<<rect.area()<<endl;
-			if(rect.area()>100){
+			if(rect.area()>80&&rect.area()<10000){
 				rectangle(_lableImg, cvPoint(rect.x, rect.y), cvPoint(rect.x + rect.width, rect.y + rect.height),CV_RGB(255,255, 255), 1, 8, 0);
 				track_rect.push_back(rect);
 			}
@@ -157,8 +156,8 @@ vector<Rect> icvprCcaBySeedFill(Mat& _binImg,Mat& _lableImg)
 		//清空all_contours
 		all_contours.clear();
 	}
-	imshow("_lableImg2",_lableImg);
-	waitKey(30);
+	//imshow("_lableImg2",_lableImg);
+	//waitKey(30);
 
 	return track_rect;
 }
@@ -185,8 +184,8 @@ vector<Rect> get_track_selection_many(Mat detection_image,Mat segment_image){
 			}
 		}
 	} 
-	imshow("inter",inter);
-	waitKey(30);
+	//imshow("inter",inter);
+	//waitKey(30);
 
 	//画方框
 	Mat label;
