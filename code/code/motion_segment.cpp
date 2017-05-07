@@ -148,7 +148,7 @@ vector<Rect> icvprCcaBySeedFill(Mat& _binImg,Mat& _lableImg)
 		if(!all_contours.empty()){
 			rect = boundingRect(all_contours); 
 			cout<<k<<"¸öÃæ»ý"<<rect.area()<<endl;
-			if(rect.area()>80&&rect.area()<10000){
+			if(rect.area()>80&&rect.area()<8000){
 				rectangle(_lableImg, cvPoint(rect.x, rect.y), cvPoint(rect.x + rect.width, rect.y + rect.height),CV_RGB(255,255, 255), 1, 8, 0);
 				track_rect.push_back(rect);
 			}
@@ -176,7 +176,7 @@ vector<Rect> get_track_selection_many(Mat detection_image,Mat segment_image){
 	for (int i = 0; i < rows; i++){  
 		for (int j = 0; j < cols; j++){
 			//cout<<(int)src1.at<uchar>(i,j)<<" "<<(int)src2.at<uchar>(i,j)<<endl;
-			if((int)detection_image.at<uchar>(i,j)==255&&(int)segment_image.at<uchar>(i,j)==255){
+			if((int)detection_image.at<uchar>(i,j)==255||(int)segment_image.at<uchar>(i,j)==255){
 				inter.at<uchar>(i,j)=255;
 				//cout<<(int)detection_image.at<uchar>(i,j)<<" "<<(int)segment_image.at<uchar>(i,j)<<endl;
 			}else{

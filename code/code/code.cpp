@@ -31,10 +31,11 @@ int main( int argc, const char** argv )
 	Rect track_window;//跟踪的区域
 	char choice,tracking_choice;
 	int capture_flag=0,tracking_flag=0;
-	int delay=0;//帧率
+	int delay=0;
 	int current_frame = 0;//计算当前为第几帧
 	clock_t start, finish,detection_time,tracking_time,total_start,total_finish;//用于计算时间复杂度
 	double duration,detection_duration,tracking_duration,total_duration;
+	double rate = 100;//帧率
 
 	//截屏
 	//int sframe1=5,sframe2=90,sframe3=900;//倒车入库
@@ -102,7 +103,7 @@ int main( int argc, const char** argv )
 	if(capture_flag == 2){
 		video_capture.open("G:/毕设/data/football.mp4");
 		total_frame_num = video_capture.get(CV_CAP_PROP_FRAME_COUNT);
-		double rate = video_capture.get(CV_CAP_PROP_FPS);
+		rate = video_capture.get(CV_CAP_PROP_FPS);//帧率
 		delay = 1;//两帧间的间隔时间:
 		if( !video_capture.isOpened() )
 		{
@@ -112,6 +113,8 @@ int main( int argc, const char** argv )
 		}
 		cout<<"******************基本信息********************"<<endl;
 		cout<<"整个视频共"<<total_frame_num<<"帧"<<endl;
+		cout<<"帧率为    "<<rate<<"帧/秒"<<endl;
+		cout<<"长为"<<video_capture.get(CV_CAP_PROP_FRAME_WIDTH)<<"     宽为"<<video_capture.get(CV_CAP_PROP_FRAME_HEIGHT)<<endl;
 		cout<<"**********************************************"<<endl;
 	}
 
@@ -142,12 +145,14 @@ int main( int argc, const char** argv )
 	// Tracker results
 	Rect result;
 
+	//测量速度
+	int per=15;
+
 	//多线程
 	int list_num=5;
 	int thread_num=5;
-	trackThread track_thread(list_num,HOG, FIXEDWINDOW, MULTISCALE, LAB);
-
-	//构建背景图
+	double ratio=150/9.15;
+	trackThread track_thread(rate, ratio, per, HOG, FIXEDWINDOW, MULTISCALE, LAB);
 
 	total_start = clock();
 	while(1)
@@ -197,19 +202,19 @@ int main( int argc, const char** argv )
 			}
 
 			//改进三帧差法检测运动物体
-			if(current_frame%20==1){
+			if(current_frame%per==1){
 				image1=image_gray.clone();//获取第一张图
 			}
-			if(current_frame%20==2){
+			if(current_frame%per==2){
 				image2=image_gray.clone();//获取第二张图
 			}
-			if(current_frame%20==3){
+			if(current_frame%per==3){
 				if(debug) cout<<"帧差法检测"<<endl;
 				image3=image_gray.clone();//获取第三张图
-				Mat detection_image = frame3_diff_motion_detection(image1,image2,image3,background_gray);//运动检测,返回跟踪区域
+				//Mat detection_image = frame3_diff_motion_detection(image1,image2,image3,background_gray);//运动检测,返回跟踪区域
 				Mat segment_image = motion_segment(pre_frame);
-				vector<Rect> track_rect=get_track_selection_many(detection_image,segment_image);
-				//vector<Rect> track_rect=get_track_selection_many_by_detection(segment_image);//获得追踪的区域
+				//vector<Rect> track_rect=get_track_selection_many(detection_image,segment_image);
+				vector<Rect> track_rect=get_track_selection_many_by_detection(segment_image);//获得追踪的区域
 				track_num=track_rect.size();
 				if(track_num>0){
 					track_thread.update(track_rect,image);//跟新跟踪器
@@ -242,7 +247,7 @@ int main( int argc, const char** argv )
 			/*****************************运动跟踪**********************/
 			    //track_num是需要追踪的总数，thread_num是线程总数
 				int count_track=track_num;//计算已经追踪的窗口数
-				track_thread.update_image(image,pre_frame);//跟新图片
+				track_thread.update_image(image,pre_frame,current_frame);//跟新图片
 
 				while(count_track>0){
 					//每次执行thread_num个
@@ -255,7 +260,7 @@ int main( int argc, const char** argv )
 					}
 					count_track-=thread_num;
 				}
-				
+
 				track_thread.set_list();//更新
 
 			/*

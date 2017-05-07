@@ -161,6 +161,7 @@ KCFTracker::KCFTracker(bool hog, bool fixed_window, bool multiscale, bool lab)
 void KCFTracker::init(const cv::Rect &roi, cv::Mat image)
 {
     _roi = roi;
+	_old_roi=roi;//¾ÉÎ»ÖÃ
     assert(roi.width >= 0 && roi.height >= 0);
     _tmpl = getFeatures(image, 1);
     _prob = createGaussianPeak(size_patch[0], size_patch[1]);
@@ -519,4 +520,8 @@ float KCFTracker::subPixelPeak(float left, float center, float right)
 
 cv::Rect KCFTracker::getRect(){
 	return _roi;
+}
+
+cv::Rect KCFTracker::getOldRect(){
+	return _old_roi;
 }

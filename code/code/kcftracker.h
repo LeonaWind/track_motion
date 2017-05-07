@@ -100,6 +100,7 @@ public:
     // Update position based on the new frame
     virtual cv::Rect update(cv::Mat image);
 	virtual cv::Rect getRect();
+	virtual cv::Rect getOldRect();
 	
     float interp_factor; // linear interpolation factor for adaptation
     float sigma; // gaussian kernel bandwidth
@@ -111,6 +112,7 @@ public:
     int template_size; // template size
     float scale_step; // scale step for multi-scale estimation
     float scale_weight;  // to downweight detection scores of other scales for added stability
+	cv::Rect_<float> _old_roi;
 
 protected:
     // Detect object in the current frame.

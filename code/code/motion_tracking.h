@@ -9,6 +9,7 @@
 #include <thread>
 #include <mutex>
 #include <queue>
+#include<sstream>
 #include "kcftracker.h"
 using namespace cv;
 using namespace std;
@@ -19,6 +20,7 @@ extern int smin;
 extern bool debug;
 
 RotatedRect motion_tracking(Rect &track_window,Mat image);//运动追踪
+float get_distance(Point result_point,Point old_point);
 
 class trackThread {
 private:
@@ -32,17 +34,24 @@ private:
 	Mat origin;
 	int rows;
 	int cols;
+	int rate;
 	bool HOG;
 	bool FIXEDWINDOW;
 	bool MULTISCALE;
 	bool LAB;
+	double ratio;//转换比例
+	int frame_num;
+	int per;
 public:
-	trackThread(int num,bool hog,bool fixedwindow,bool multiscale,bool lab){
-		track_num=num;
+	trackThread(int video_rate,double video_ratio,int video_per,bool hog,bool fixedwindow,bool multiscale,bool lab){
+		rate=video_rate;
+		ratio=video_ratio;
 		HOG=hog;
 		FIXEDWINDOW=fixedwindow;
 		MULTISCALE=multiscale;
 		LAB=lab;
+		frame_num=0;
+		per=video_per;
 	}
 
 	void thread_test(){
@@ -58,11 +67,51 @@ public:
 				list.pop();
 
 			}
+			//计算速度
+			/*//按秒测
+			old_rect=tracker.getOldRect();
+			result_rect=tracker.update(image);
+			int temp_x=(old_rect.x+old_rect.width)/2;
+			int temp_y=(old_rect.y+old_rect.height)/2;
+			Point old_point(temp_x,temp_y);
+			temp_x=(result_rect.x+result_rect.width)/2;
+			temp_y=(result_rect.y+result_rect.height)/2;
+			Point result_point(temp_x,temp_y);
+			float dis=get_distance(result_point,old_point);//移动的距离
+			dis=dis/ratio;//转换比例
+			int frame=frame_num%per;
+			float v=dis*rate/frame;
+			cout<<v<<endl;
+			ostringstream oss;
+			oss<<v;
+			string x_string(oss.str());
+			x_string+="m/s";
+			*/
+			//按帧测
 			old_rect=tracker.getRect();
 			result_rect=tracker.update(image);
+			int temp_x=(old_rect.x+old_rect.width)/2;
+			int temp_y=(old_rect.y+old_rect.height)/2;
+			Point old_point(temp_x,temp_y);
+			temp_x=(result_rect.x+result_rect.width)/2;
+			temp_y=(result_rect.y+result_rect.height)/2;
+			Point result_point(temp_x,temp_y);
+			float dis=get_distance(result_point,old_point);//移动的距离
+			dis=dis/ratio;//转换比例
+			float v=dis*rate;
+			cout<<v<<endl;
+			ostringstream oss;
+			oss<<v;
+			string x_string(oss.str());
+			x_string+="m/s";
+
+			//减去摄像头的移动速度
+
 			{
 				unique_lock<mutex> lock(pic_mutex);
 				rectangle(origin, Point(result_rect.x, result_rect.y), Point(result_rect.x + result_rect.width, result_rect.y + result_rect.height), Scalar(0, 255, 255), 1, 8);
+				//显示速度
+				putText(origin,x_string,Point(result_rect.x, result_rect.y),FONT_HERSHEY_SIMPLEX,0.4,Scalar(255,0,0));
 			}
 			//加个判断，如果已经到达了边界，就不再跟踪了
 			//判断方向
@@ -117,11 +166,12 @@ public:
 		}
 	}
 
-	void update_image(Mat new_image,Mat new_origin){
+	void update_image(Mat new_image,Mat new_origin,int new_frame_num){
 		image=new_image;
 		origin=new_origin;
 		rows=new_image.rows;
 		cols=new_image.cols;
+		frame_num=new_frame_num;
 	}
 
 	void set_image(Mat pic){
