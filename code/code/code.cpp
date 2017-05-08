@@ -17,7 +17,7 @@ using namespace std;
 int vmin = 10;
 int vmax = 256;
 int smin = 60;
-bool debug=true;
+bool debug=false;
 int track_num=0;//追踪的窗口数
 mutex m;//互斥量
 
@@ -101,7 +101,7 @@ int main( int argc, const char** argv )
 	VideoCapture video_capture;
 	long total_frame_num = 0;
 	if(capture_flag == 2){
-		video_capture.open("G:/毕设/data/football.mp4");
+		video_capture.open("football.mp4");
 		total_frame_num = video_capture.get(CV_CAP_PROP_FRAME_COUNT);
 		rate = video_capture.get(CV_CAP_PROP_FPS);//帧率
 		delay = 1;//两帧间的间隔时间:
@@ -146,7 +146,7 @@ int main( int argc, const char** argv )
 	Rect result;
 
 	//测量速度
-	int per=15;
+	int per=30;
 
 	//多线程
 	int list_num=5;
@@ -175,7 +175,7 @@ int main( int argc, const char** argv )
 		if( !pre_frame.empty())
 		{
 			//如果太大，将图片变小
-			//resize(pre_frame, pre_frame, Size(), 0.5, 0.5);
+			//resize(pre_frame, pre_frame, Size(), 0.8, 0.8);
 			imshow("原视频",pre_frame);
 			cout<<"这是第"<<current_frame<<"帧"<<endl;
 			if(debug) {
@@ -190,12 +190,6 @@ int main( int argc, const char** argv )
 			cvtColor(image, image_gray, CV_BGR2GRAY);//获取灰度图image_gray,单通道图像
 			//equalizeHist(image_gray,image_gray);//直方图均衡化
 			//imshow("equalizeHist_gray",image_gray);
-
-			//背景减法检测运动物体
-			/*if((current_frame%50==0)||(current_frame%50==1)||(current_frame%50==2)){
-			Rect track_window_temp = background_motion_detection(image_gray,background_gray);//运动检测,返回跟踪区域
-			track_window=rectA_intersect_rectB(track_window_temp,track_window);//求两个区域的交叉区域
-			}*/
 
 			if(current_frame == 1){//如果是第一帧，需要申请内存，并初始化    
 				image_gray.convertTo(background_gray,CV_32F); //第一帧作为背景图
@@ -219,27 +213,6 @@ int main( int argc, const char** argv )
 				if(track_num>0){
 					track_thread.update(track_rect,image);//跟新跟踪器
 				}
-			
-				/*
-				//简易做法
-				int max_area=0;
-				Rect track_window_temp;
-				for (vector<Rect>::const_iterator iter = track_rect.begin(); iter != track_rect.end(); iter++){
-					if((*iter).area()>max_area){
-						max_area=(*iter).area();
-						track_window_temp=(*iter);
-					}
-				}
-
-				if(track_window_temp.width>0&&track_window_temp.height>0){
-					if(tracking_flag == 1){//camshift运动追踪 
-						track_window=track_window_temp;
-						if(debug)cout<<"track_window"<<track_window<<endl;
-					}else if(tracking_flag == 2){//KCF运动跟踪
-						tracker.init(track_window_temp, image);//Rect(xMin, yMin, width, height)
-					}
-				}
-				*/
 
 				if(debug) detection_time=clock();
 			}

@@ -8,11 +8,6 @@ Mat motion_segment(Mat image){
 	if (!image.data)
 		return result;
 
-	// Display the color image
-	//resize(image, image, Size(), 0.7, 0.7);
-	//namedWindow("Original image");
-	//imshow("Original image",image);
-
 	// Identify image pixels with object
 	Mat binary;
 	cvtColor(image,binary,COLOR_BGRA2GRAY);
@@ -68,14 +63,6 @@ Mat motion_segment(Mat image){
 
 vector<Rect> icvprCcaBySeedFill(Mat& _binImg,Mat& _lableImg)  
 {  
-	// connected component analysis (4-component)  
-	// use seed filling algorithm  
-	// 1. begin with a foreground pixel and push its foreground neighbors into a stack;  
-	// 2. pop the top pixel on the stack and label it with the same label until the stack is empty  
-	//   
-	// foreground pixel: _binImg(x,y) = 1  
-	// background pixel: _binImg(x,y) = 0  
-
 	vector<Rect> track_rect;
 	if (_binImg.empty() ||  
 		_binImg.type() != CV_8UC1)  
@@ -147,8 +134,12 @@ vector<Rect> icvprCcaBySeedFill(Mat& _binImg,Mat& _lableImg)
 
 		if(!all_contours.empty()){
 			rect = boundingRect(all_contours); 
-			cout<<k<<"个面积"<<rect.area()<<endl;
-			if(rect.area()>80&&rect.area()<8000){
+			if(debug) cout<<k<<"个面积"<<rect.area()<<endl;
+			rect.x=rect.x-10>0?rect.x-10:0;
+			rect.y=rect.y-10>0?rect.y-10:0;
+			rect.width=rect.width+10<cols?rect.width+10:cols;
+			rect.height=rect.height+10<rows?rect.height+10:rows;
+			if(rect.area()>500&&rect.area()<8000){ 
 				rectangle(_lableImg, cvPoint(rect.x, rect.y), cvPoint(rect.x + rect.width, rect.y + rect.height),CV_RGB(255,255, 255), 1, 8, 0);
 				track_rect.push_back(rect);
 			}
