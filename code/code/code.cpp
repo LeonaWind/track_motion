@@ -50,7 +50,7 @@ int main( int argc, const char** argv )
 	cout<<"**********************************************"<<endl;
 	//choice=getchar();
 	//getchar();
-	choice='2';
+	choice='3';
 
 	cout<<"***************请选择运动跟踪方法*****************"<<endl;
 	cout<<"1--CamShift"<<endl;
@@ -205,10 +205,10 @@ int main( int argc, const char** argv )
 			if(current_frame%per==3){
 				if(debug) cout<<"帧差法检测"<<endl;
 				image3=image_gray.clone();//获取第三张图
-				//Mat detection_image = frame3_diff_motion_detection(image1,image2,image3,background_gray);//运动检测,返回跟踪区域
-				Mat segment_image = motion_segment(pre_frame);
+				Mat detection_image = frame3_diff_motion_detection(image1,image2,image3,background_gray);//运动检测,返回跟踪区域
+				//Mat segment_image = motion_segment(pre_frame);
 				//vector<Rect> track_rect=get_track_selection_many(detection_image,segment_image);
-				vector<Rect> track_rect=get_track_selection_many_by_detection(segment_image);//获得追踪的区域
+				vector<Rect> track_rect=get_track_selection_many_by_detection(detection_image);//获得追踪的区域
 				track_num=track_rect.size();
 				if(track_num>0){
 					track_thread.update(track_rect,image);//跟新跟踪器
