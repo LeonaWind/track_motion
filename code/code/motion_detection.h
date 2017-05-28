@@ -14,7 +14,7 @@
 using namespace cv;
 using namespace std;
 
-Rect background_motion_detection(Mat &image_gray,Mat &background_gray);//运动检测
+Mat background_motion_detection(Mat &image_gray,Mat &background_gray);//运动检测
 Rect get_track_selection(Mat &image);//获取追踪区域
 Rect get_track_selection_all(Mat &image);
 Rect rectA_intersect_rectB(Rect rectA, Rect rectB);//求两个区域的交叉部分

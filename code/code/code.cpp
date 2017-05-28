@@ -50,7 +50,7 @@ int main( int argc, const char** argv )
 	cout<<"**********************************************"<<endl;
 	//choice=getchar();
 	//getchar();
-	choice='3';
+	choice='2';
 
 	cout<<"***************请选择运动跟踪方法*****************"<<endl;
 	cout<<"1--CamShift"<<endl;
@@ -101,7 +101,7 @@ int main( int argc, const char** argv )
 	VideoCapture video_capture;
 	long total_frame_num = 0;
 	if(capture_flag == 2){
-		video_capture.open("football.mp4");
+		video_capture.open("G:\\毕设\\data\\football.mp4");
 		total_frame_num = video_capture.get(CV_CAP_PROP_FRAME_COUNT);
 		rate = video_capture.get(CV_CAP_PROP_FPS);//帧率
 		delay = 1;//两帧间的间隔时间:
@@ -119,7 +119,7 @@ int main( int argc, const char** argv )
 	}
 
 	//打开测试相片序列
-	string pic_path="G:\\毕设\\data\\Subway\\img\\";
+	string pic_path="G:\\毕设\\data\\Biker\\img\\";
 	int max_pic=175;
 	if(capture_flag == 3){
 		delay = 1;//两帧间的间隔时间:
@@ -146,7 +146,7 @@ int main( int argc, const char** argv )
 	Rect result;
 
 	//测量速度
-	int per=30;
+	int per=15;
 
 	//多线程
 	int list_num=5;
@@ -154,10 +154,14 @@ int main( int argc, const char** argv )
 	double ratio=150/9.15;
 	trackThread track_thread(rate, ratio, per, HOG, FIXEDWINDOW, MULTISCALE, LAB);
 
+	//计算效率
+	double total_track_duration,total_detection_duration;
+	int cal_count=0;
+
 	total_start = clock();
 	while(1)
 	{
-		if(debug) start = clock();
+		start = clock();
 		//读入一帧图像
 		if(capture_flag == 1){
 			capture >> pre_frame;
@@ -175,7 +179,7 @@ int main( int argc, const char** argv )
 		if( !pre_frame.empty())
 		{
 			//如果太大，将图片变小
-			//resize(pre_frame, pre_frame, Size(), 0.8, 0.8);
+			//resize(pre_frame, pre_frame, Size(), 0.4, 0.4);
 			imshow("原视频",pre_frame);
 			cout<<"这是第"<<current_frame<<"帧"<<endl;
 			if(debug) {
@@ -191,6 +195,7 @@ int main( int argc, const char** argv )
 			//equalizeHist(image_gray,image_gray);//直方图均衡化
 			//imshow("equalizeHist_gray",image_gray);
 
+
 			if(current_frame == 1){//如果是第一帧，需要申请内存，并初始化    
 				image_gray.convertTo(background_gray,CV_32F); //第一帧作为背景图
 			}
@@ -205,56 +210,112 @@ int main( int argc, const char** argv )
 			if(current_frame%per==3){
 				if(debug) cout<<"帧差法检测"<<endl;
 				image3=image_gray.clone();//获取第三张图
+
 				Mat detection_image = frame3_diff_motion_detection(image1,image2,image3,background_gray);//运动检测,返回跟踪区域
-				//Mat segment_image = motion_segment(pre_frame);
-				//vector<Rect> track_rect=get_track_selection_many(detection_image,segment_image);
-				vector<Rect> track_rect=get_track_selection_many_by_detection(detection_image);//获得追踪的区域
+				Mat segment_image = motion_segment(pre_frame);
+				vector<Rect> track_rect=get_track_selection_many(detection_image,segment_image);
+				//vector<Rect> track_rect=get_track_selection_many_by_detection(segment_image);//获得追踪的区域
 				track_num=track_rect.size();
 				if(track_num>0){
 					track_thread.update(track_rect,image);//跟新跟踪器
 				}
 
-				if(debug) detection_time=clock();
+				detection_time=clock();
 			}
 
+
+			/*
+			//背景建模法
+			if(current_frame == 1) { 
+			//转化成单通道图像再处理   
+			cvtColor(image, image_gray, CV_BGR2GRAY); 
+			image_gray.convertTo(background_gray,CV_32F); 
+			}else if(current_frame%per==3){
+			cvtColor(image, image_gray, CV_BGR2GRAY);//变为灰度图 
+			Mat detection_image=background_motion_detection(image_gray,background_gray);//运动检测,返回跟踪区域
+			vector<Rect> track_rect=get_track_selection_many_by_detection(detection_image);//获得追踪的区域
+			track_num=track_rect.size();
+			if(track_num>0){
+			track_thread.update(track_rect,image);//跟新跟踪器
+			}
+
+			detection_time=clock();
+
+			}
+			*/
 			/*****************************运动跟踪**********************/
-			    //track_num是需要追踪的总数，thread_num是线程总数
-				int count_track=track_num;//计算已经追踪的窗口数
-				track_thread.update_image(image,pre_frame,current_frame);//跟新图片
+			//track_num是需要追踪的总数，thread_num是线程总数
+			int count_track=track_num;//计算已经追踪的窗口数
+			track_thread.update_image(image,pre_frame,current_frame);//跟新图片
 
-				while(count_track>0){
-					//每次执行thread_num个
-					thread threads[5];
-					for(int t=0;t<thread_num;t++){
-						threads[t]=thread(run_thread,ref(track_thread));
-					}
-					for(auto& t:threads){//等待执行完
-						t.join();
-					}
-					count_track-=thread_num;
+			while(count_track>0){
+				//每次执行thread_num个
+				thread threads[5];
+				for(int t=0;t<thread_num;t++){
+					threads[t]=thread(run_thread,ref(track_thread));
 				}
+				for(auto& t:threads){//等待执行完
+					t.join();
+				}
+				count_track-=thread_num;
+			}
 
-				track_thread.set_list();//更新
+			track_thread.set_list();//更新
 
 			/*
 			if(current_frame>3){
-				if(tracking_flag == 1){//camshift运动追踪 
-					trackBox=motion_tracking(track_window,image);
-					ellipse( pre_frame, trackBox, Scalar(255,0,0), 3, CV_AA );
-					imshow( "camshift运动跟踪结果", pre_frame );
-					if(debug)cout<<"track_window"<<track_window<<endl;
-				}else if(tracking_flag == 2){//KCF运动跟踪
-					result = tracker.update(image);
-					rectangle(pre_frame, Point(result.x, result.y), Point(result.x + result.width, result.y + result.height), Scalar(0, 255, 255), 1, 8);
-					imshow( "KCF运动跟踪结果", pre_frame );
-				}
+			if(tracking_flag == 1){//camshift运动追踪 
+			trackBox=motion_tracking(track_window,image);
+			ellipse( pre_frame, trackBox, Scalar(255,0,0), 3, CV_AA );
+			imshow( "camshift运动跟踪结果", pre_frame );
+			if(debug)cout<<"track_window"<<track_window<<endl;
+			}else if(tracking_flag == 2){//KCF运动跟踪
+			result = tracker.update(image);
+			rectangle(pre_frame, Point(result.x, result.y), Point(result.x + result.width, result.y + result.height), Scalar(0, 255, 255), 1, 8);
+			imshow( "KCF运动跟踪结果", pre_frame );
+			}
 			}
 			*/
 
-			if(debug) tracking_time=clock();
+			tracking_time=clock();
+
+			duration = (double)(finish - start) / CLOCKS_PER_SEC; //计算效率
+			if(detection_time>start){
+				if(current_frame%per==3){
+					detection_duration=(double)(detection_time - start) / CLOCKS_PER_SEC;
+					tracking_duration=(double)(tracking_time - detection_time) / CLOCKS_PER_SEC;
+				}else{
+					detection_duration=0;
+					tracking_duration=(double)(tracking_time - start) / CLOCKS_PER_SEC;
+				}
+
+			}else{
+				detection_duration=0;
+				tracking_duration=(double)(tracking_time - start) / CLOCKS_PER_SEC;
+			}
+
+			//cout << "duration" << duration<<endl;
+			cout << "detection_duration=" << detection_duration<<endl;
+			cout << "tracking_duration=" << tracking_duration<<endl;
+
+			total_detection_duration+=detection_duration;
+			total_track_duration+=tracking_duration;
+
+
+
+			++cal_count;
+			if(cal_count==100){
+				total_track_duration=total_track_duration/cal_count;
+				total_detection_duration=total_detection_duration/7;
+				cout <<current_frame<<"帧"<< "total_track_duration" << total_track_duration<<endl;
+				cout <<current_frame<<"帧"<< "total_detection_duration=" << total_detection_duration<<endl;
+				cal_count=0;
+				total_track_duration=0;
+				total_detection_duration=0;
+				getchar();
+			}
 
 			++current_frame;//图片数+1
-
 
 			//读取键盘输入操作
 			char c = (char)waitKey(delay);
@@ -264,23 +325,12 @@ int main( int argc, const char** argv )
 			case '1':
 				break;
 			}
-			if(debug) finish = clock();
+			finish = clock();
+
+			
 		}
 
-		if(debug){
-			duration = (double)(finish - start) / CLOCKS_PER_SEC; //计算效率
-			if(detection_time>start){
-				detection_duration=(double)(detection_time - start) / CLOCKS_PER_SEC;
-				tracking_duration=(double)(tracking_time - detection_time) / CLOCKS_PER_SEC;
-			}else{
-				detection_duration=0;
-				tracking_duration=(double)(tracking_time - start) / CLOCKS_PER_SEC;
-			}
 
-			cout << "duration" << duration<<endl;
-			cout << "detection_duration=" << detection_duration<<endl;
-			cout << "tracking_duration=" << tracking_duration<<endl;
-		}
 
 		//截图
 		//if(current_frame ==sframe1||current_frame ==sframe2||current_frame ==sframe3){

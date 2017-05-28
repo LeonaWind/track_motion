@@ -12,7 +12,7 @@ Mat frame3_diff_motion_detection(Mat image_gray_pre,Mat image_gray,Mat image_gra
 	int rows=image_gray.rows;
 	int cols=image_gray.cols;
 	Mat output(rows,cols,CV_8UC1);//检测出的运动图像
-	int thres=5;
+	int thres=10;
 
 	//1.两两图像做差分
 	Mat diff_gray(rows,cols,CV_8UC1);
@@ -37,7 +37,7 @@ Mat frame3_diff_motion_detection(Mat image_gray_pre,Mat image_gray,Mat image_gra
 	waitKey(30);
 
 	//3.形态学处理
-	Mat element=getStructuringElement(MORPH_RECT,Size(3,3));
+	Mat element(15,15,CV_8U,Scalar(1));
 	morphologyEx(diff_gray,diff_gray,MORPH_CLOSE,element);
 	if(debug) imshow("形态学处理结果",diff_gray);
 	waitKey(30);
@@ -70,7 +70,7 @@ Mat frame3_diff_motion_detection(Mat image_gray_pre,Mat image_gray,Mat image_gra
 
 	//8.形态学处理
 	morphologyEx(diff_gray,output,MORPH_CLOSE,element);
-	if(debug) imshow("检测最后结果",output);
+	if(debug) imshow("运动检测最后结果",output);
 	waitKey(30);
 
 	//imshow("image_gray_canny",image_gray_canny);
@@ -89,7 +89,7 @@ Mat frame3_diff_motion_detection(Mat image_gray_pre,Mat image_gray,Mat image_gra
 // parameter:当前图像Mat image，当前图像灰度图Mat image_gray，CV_32F背景图像灰度图Mat background_gray
 // return: 被跟踪区域Rect selection
 //-------------------------------------------------------------------------------------------------
-Rect background_motion_detection(Mat &image_gray,Mat &background_gray_cv32f){
+Mat background_motion_detection(Mat &image_gray,Mat &background_gray_cv32f){
 	Mat diff_gray;//当前图与背景图的差异
 	Mat output;//检测出的运动图像
 	double learningRate=0.9;//学习率
@@ -104,8 +104,9 @@ Rect background_motion_detection(Mat &image_gray,Mat &background_gray_cv32f){
 	//imshow("image_gray",image_gray);
 	//imshow("background", background_gray_cv8u); 
 
-	Rect selection = get_track_selection(output); 
-	return selection;
+	imshow("output",output);
+	waitKey(30);
+	return output;
 
 }
 

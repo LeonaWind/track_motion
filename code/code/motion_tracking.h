@@ -99,7 +99,7 @@ public:
 			float dis=get_distance(result_point,old_point);//移动的距离
 			dis=dis/ratio;//转换比例
 			float v=dis*rate;
-			cout<<v<<endl;
+			if(debug) cout<<v<<endl;
 			ostringstream oss;
 			oss<<v;
 			string x_string(oss.str());

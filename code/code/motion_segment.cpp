@@ -4,6 +4,8 @@ extern bool debug;
 //物体分割
 Mat motion_segment(Mat image){
 	Mat result;
+	int rows=image.rows;
+	int cols=image.cols;
 
 	if (!image.data)
 		return result;
@@ -15,8 +17,15 @@ Mat motion_segment(Mat image){
 	//imshow("binary image",binary);
 	//waitKey();
 
+	//足球运动员删除最上面的观众部分
+	for (int i = 0; i < rows; i++){  
+		for (int j = 0; j < 90; j++){
+			binary.at<uchar>(i,j)=255;
+		}
+	} 
+
 	// CLOSE operation
-	Mat element5(3,3,CV_8U,Scalar(1));//5*5正方形，8位uchar型，全1结构元素
+	Mat element5(8,8,CV_8U,Scalar(1));//5*5正方形，8位uchar型，全1结构元素
 	Mat fg1;
 	//morphologyEx(binary, fg1,MORPH_CLOSE,element5,Point(-1,-1),1);// 闭运算填充物体内细小空洞、连接邻近物体
 	morphologyEx(binary, fg1,MORPH_CLOSE,element5);
@@ -55,8 +64,8 @@ Mat motion_segment(Mat image){
 	result=segmenter1.getSegmentation();
 	Mat element=getStructuringElement(MORPH_RECT,Size(15,15));
 	morphologyEx(result,result,MORPH_CLOSE,element);
-	//imshow("Segmentation1",result);
-	//waitKey(30);
+	if(debug) imshow("轮廓分割结果",result);
+	waitKey(30);
 
 	return result;
 }
@@ -116,7 +125,7 @@ vector<Rect> icvprCcaBySeedFill(Mat& _binImg,Mat& _lableImg)
 	_lableImg.convertTo(_lableImg, CV_8UC1);
 	//imshow("_lableImg",_lableImg);
 	//waitKey(30);
-	cout<<"总label"<<label<<endl;
+	if(debug) cout<<"总label"<<label<<endl;
 
 	vector<Point> all_contours;
 	Rect rect;//追踪区域
@@ -139,7 +148,7 @@ vector<Rect> icvprCcaBySeedFill(Mat& _binImg,Mat& _lableImg)
 			rect.y=rect.y-10>0?rect.y-10:0;
 			rect.width=rect.width+10<cols?rect.width+10:cols;
 			rect.height=rect.height+10<rows?rect.height+10:rows;
-			if(rect.area()>500&&rect.area()<8000){ 
+			if(rect.area()>300&&rect.area()<10000&&rect.y>40){ 
 				rectangle(_lableImg, cvPoint(rect.x, rect.y), cvPoint(rect.x + rect.width, rect.y + rect.height),CV_RGB(255,255, 255), 1, 8, 0);
 				track_rect.push_back(rect);
 			}
@@ -167,7 +176,7 @@ vector<Rect> get_track_selection_many(Mat detection_image,Mat segment_image){
 	for (int i = 0; i < rows; i++){  
 		for (int j = 0; j < cols; j++){
 			//cout<<(int)src1.at<uchar>(i,j)<<" "<<(int)src2.at<uchar>(i,j)<<endl;
-			if((int)detection_image.at<uchar>(i,j)==255||(int)segment_image.at<uchar>(i,j)==255){
+			if((int)detection_image.at<uchar>(i,j)==255&&(int)segment_image.at<uchar>(i,j)==255){
 				inter.at<uchar>(i,j)=255;
 				//cout<<(int)detection_image.at<uchar>(i,j)<<" "<<(int)segment_image.at<uchar>(i,j)<<endl;
 			}else{
@@ -175,8 +184,12 @@ vector<Rect> get_track_selection_many(Mat detection_image,Mat segment_image){
 			}
 		}
 	} 
-	//imshow("inter",inter);
-	//waitKey(30);
+	//Mat element=getStructuringElement(MORPH_RECT,Size(20,20));
+	//morphologyEx(inter,inter,MORPH_CLOSE,element);
+	if(debug) {
+		imshow("inter",inter);
+	waitKey(30);
+	}
 
 	//画方框
 	Mat label;
