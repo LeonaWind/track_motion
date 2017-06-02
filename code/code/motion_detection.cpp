@@ -12,7 +12,7 @@ Mat frame3_diff_motion_detection(Mat image_gray_pre,Mat image_gray,Mat image_gra
 	int rows=image_gray.rows;
 	int cols=image_gray.cols;
 	Mat output(rows,cols,CV_8UC1);//检测出的运动图像
-	int thres=10;
+	int thres=15;
 
 	//1.两两图像做差分
 	Mat diff_gray(rows,cols,CV_8UC1);
@@ -37,7 +37,7 @@ Mat frame3_diff_motion_detection(Mat image_gray_pre,Mat image_gray,Mat image_gra
 	waitKey(30);
 
 	//3.形态学处理
-	Mat element(15,15,CV_8U,Scalar(1));
+	Mat element(6,6,CV_8U,Scalar(1));
 	morphologyEx(diff_gray,diff_gray,MORPH_CLOSE,element);
 	if(debug) imshow("形态学处理结果",diff_gray);
 	waitKey(30);
@@ -69,7 +69,8 @@ Mat frame3_diff_motion_detection(Mat image_gray_pre,Mat image_gray,Mat image_gra
 	//mat_or(diff_gray,background_diff_gray,output);
 
 	//8.形态学处理
-	morphologyEx(diff_gray,output,MORPH_CLOSE,element);
+	Mat element1(5,5,CV_8U,Scalar(1));
+	morphologyEx(diff_gray,output,MORPH_CLOSE,element1);
 	if(debug) imshow("运动检测最后结果",output);
 	waitKey(30);
 
@@ -92,12 +93,12 @@ Mat frame3_diff_motion_detection(Mat image_gray_pre,Mat image_gray,Mat image_gra
 Mat background_motion_detection(Mat &image_gray,Mat &background_gray_cv32f){
 	Mat diff_gray;//当前图与背景图的差异
 	Mat output;//检测出的运动图像
-	double learningRate=0.9;//学习率
+	double learningRate=0.2;//学习率
 	Mat background_gray_cv8u;//CV_8U格式背景图 
 	background_gray_cv32f.convertTo (background_gray_cv8u,CV_8U);
 
 	absdiff(image_gray, background_gray_cv8u, diff_gray);//当前帧跟背景图相减  
-	threshold(diff_gray, output, 30, 255.0, CV_THRESH_BINARY);//二值化前景图
+	threshold(diff_gray, output, 70, 255.0, CV_THRESH_BINARY);//二值化前景图
 	accumulateWeighted (image_gray,background_gray_cv32f,learningRate,output);//更新背景，output作为掩码
 
 	//imshow("foreground",output);
@@ -116,11 +117,12 @@ Mat background_motion_detection(Mat &image_gray,Mat &background_gray_cv32f){
 // parameter:输入图像Mat image
 // return: 被跟踪区域Rect selection
 //-------------------------------------------------------------------------------------------------
-Rect get_track_selection_all(Mat &image){
+vector<Rect> get_track_selection_all(Mat &image){
 
 	int rows=image.rows;
 	int cols=image.cols;
 	vector<Point> all_contours;
+	vector<Rect> result;
 	Rect rect;//追踪区域
 
 	for (int i = 0; i < rows; i++){  
@@ -140,7 +142,8 @@ Rect get_track_selection_all(Mat &image){
 	}
 
 	if(debug) imshow("改进三帧差法",image);
-	return rect;
+	result.push_back(rect);
+	return result;
 }
 
 //-------------------------------------------------------------------------------------------------

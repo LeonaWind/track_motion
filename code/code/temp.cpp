@@ -427,3 +427,93 @@ imshow("get_track_selection",dest_image);
 return rect;
 
 }*/
+//int main( int argc, const char** argv )
+//{	
+//	VideoCapture capture;//视频操作结构
+//	int delay =20;//两帧的间隔时间，默认20
+//	int current_frame_num=0;//当前帧数
+//	Mat current_frame;//读取的帧图像
+//	Mat image,image_gray;//当前处理图像,当前处理图像灰度图
+//	Mat background,background_gray_cv8u;//背景图的灰度图，CV_8U格式背景图 
+//	Mat diff_gray;//当前帧图像与背景图的差异
+//	Mat output;//检测出的运动图像
+//	double learningRate=0.2;//背景更新率
+//
+//	/******************************************/
+//	/*根据输入的choice值，读取摄像头或视频数据*/
+//	/******************************************/
+//	char choice;
+//	cout<<"***************请输入您的数据来源*****************"<<endl;
+//	cout<<"1--打开电脑摄像头"<<endl;
+//	cout<<"2--打开测试视频"<<endl;
+//	cout<<"其他键--退出"<<endl;
+//	cout<<"**********************************************"<<endl;
+//	choice=getchar();
+//	getchar();
+//	if(choice == '1'){//打开电脑摄像头
+//		delay = 20;//设置两帧间的间隔时间:
+//		capture.open(0);
+//	}else if(choice == '2'){//打开测试视频
+//		capture.open("test.avi");//打开视频文件
+//		double rate = capture.get(CV_CAP_PROP_FPS);//帧率
+//		long total_frame_num = capture.get(CV_CAP_PROP_FRAME_COUNT);//获取总帧数
+//		delay = 1000/rate;//设置两帧间的间隔时间:
+//	}else{
+//		cout<<"退出"<<endl;
+//		return -1;
+//	}
+//	if( !capture.isOpened() ){
+//		return -1;
+//	}
+//
+//
+//	//利用while 循环读取帧
+//	while(1){
+//		//读取一帧图像
+//		if(choice == '1'){//摄像头数据
+//			capture >> current_frame;
+//		}else if(choice == '2'){//视频数据
+//			capture.read(current_frame);
+//		}else{
+//			return -1;
+//		}
+//
+//		if( !current_frame.empty()){
+//			resize(current_frame, current_frame, Size(), 0.8, 0.8);
+//			imshow("原视频",current_frame);
+//			current_frame.copyTo(image);
+//			//将图像转化成单通道图像处理
+//			cvtColor(image, image_gray, CV_BGR2GRAY);
+//
+//			/******************************************/
+//			/*背景建模法，检测结果保存在output中      */
+//			/*运动的像素点值为255，背景像素点值为0    */
+//			/******************************************/
+//			if(current_frame_num == 0) {
+//				//步骤1：若是第一帧，直接将图像作为背景图background
+//				image_gray.convertTo(background,CV_32F); 
+//			}else{
+//				//步骤2：当前帧跟背景图相减
+//				background.convertTo (background_gray_cv8u,CV_8U);
+//				absdiff(image_gray, background_gray_cv8u, diff_gray);  
+//				//步骤3：二值化前景图
+//				threshold(diff_gray, output, 30, 255.0, CV_THRESH_BINARY);
+//				//步骤4：更新背景图background，output作为掩码
+//				accumulateWeighted (image_gray, background, learningRate, output);
+//				imshow("背景差分法检测结果",output);//显示结果
+//			}
+//			++current_frame_num;//图片数+1
+//		}
+//
+//		//读取键盘输入操作，点击esc退出
+//		char c = (char)waitKey(delay);
+//		if(c == 27)
+//			break;//检测是否退出
+//	}
+//	/******************************************/
+//	/*释放资源，退出                          */
+//	/******************************************/
+//	capture.release();//关闭视频文件
+//	waitKey(0);
+//	return 0;
+//}

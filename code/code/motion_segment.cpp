@@ -17,12 +17,14 @@ Mat motion_segment(Mat image){
 	//imshow("binary image",binary);
 	//waitKey();
 
+	
 	//足球运动员删除最上面的观众部分
 	for (int i = 0; i < rows; i++){  
-		for (int j = 0; j < 90; j++){
+		for (int j = 0; j < 100; j++){
 			binary.at<uchar>(i,j)=255;
 		}
 	} 
+	
 
 	// CLOSE operation
 	Mat element5(8,8,CV_8U,Scalar(1));//5*5正方形，8位uchar型，全1结构元素
@@ -62,7 +64,7 @@ Mat motion_segment(Mat image){
 	// Display segmentation result
 	//将修改后的标记图markers转换为可显示的8位灰度图并返回分割结果（白色为前景，灰色为背景，0为边缘）
 	result=segmenter1.getSegmentation();
-	Mat element=getStructuringElement(MORPH_RECT,Size(15,15));
+	Mat element=getStructuringElement(MORPH_RECT,Size(8,8));
 	morphologyEx(result,result,MORPH_CLOSE,element);
 	if(debug) imshow("轮廓分割结果",result);
 	waitKey(30);
@@ -148,7 +150,7 @@ vector<Rect> icvprCcaBySeedFill(Mat& _binImg,Mat& _lableImg)
 			rect.y=rect.y-10>0?rect.y-10:0;
 			rect.width=rect.width+10<cols?rect.width+10:cols;
 			rect.height=rect.height+10<rows?rect.height+10:rows;
-			if(rect.area()>300&&rect.area()<10000&&rect.y>40){ 
+			if(rect.area()>150&&rect.area()<10000&&rect.y>40){ 
 				rectangle(_lableImg, cvPoint(rect.x, rect.y), cvPoint(rect.x + rect.width, rect.y + rect.height),CV_RGB(255,255, 255), 1, 8, 0);
 				track_rect.push_back(rect);
 			}
@@ -184,8 +186,8 @@ vector<Rect> get_track_selection_many(Mat detection_image,Mat segment_image){
 			}
 		}
 	} 
-	//Mat element=getStructuringElement(MORPH_RECT,Size(20,20));
-	//morphologyEx(inter,inter,MORPH_CLOSE,element);
+	Mat element=getStructuringElement(MORPH_RECT,Size(15,15));
+	morphologyEx(inter,inter,MORPH_CLOSE,element);
 	if(debug) {
 		imshow("inter",inter);
 	waitKey(30);
@@ -193,7 +195,7 @@ vector<Rect> get_track_selection_many(Mat detection_image,Mat segment_image){
 
 	//画方框
 	Mat label;
-	track_rect=icvprCcaBySeedFill(inter,label);
+	track_rect= icvprCcaBySeedFill(inter,label);
 	return track_rect;
 
 }

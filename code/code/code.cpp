@@ -26,6 +26,7 @@ const char* keys =
 	"{1|  | 0 | camera number}"
 };
 
+
 int main( int argc, const char** argv )
 {
 	Rect track_window;//跟踪的区域
@@ -45,16 +46,15 @@ int main( int argc, const char** argv )
 	cout<<"***************请输入您的选择*****************"<<endl;
 	cout<<"1--打开电脑摄像头"<<endl;
 	cout<<"2--打开测试视频"<<endl;
-	cout<<"3--打开测试相片序列"<<endl;
 	cout<<"其他键--退出"<<endl;
 	cout<<"**********************************************"<<endl;
-	//choice=getchar();
-	//getchar();
-	choice='2';
+	choice=getchar();
+	getchar();
+	//choice='2';
 
 	cout<<"***************请选择运动跟踪方法*****************"<<endl;
-	cout<<"1--CamShift"<<endl;
-	cout<<"2--KCF"<<endl;
+	//cout<<"1--CamShift"<<endl;
+	cout<<"KCF"<<endl;
 	cout<<"其他键--退出"<<endl;
 	cout<<"**********************************************"<<endl;
 	//tracking_choice=getchar();
@@ -101,7 +101,7 @@ int main( int argc, const char** argv )
 	VideoCapture video_capture;
 	long total_frame_num = 0;
 	if(capture_flag == 2){
-		video_capture.open("G:\\毕设\\data\\football.mp4");
+		video_capture.open("football1.mp4");
 		total_frame_num = video_capture.get(CV_CAP_PROP_FRAME_COUNT);
 		rate = video_capture.get(CV_CAP_PROP_FPS);//帧率
 		delay = 1;//两帧间的间隔时间:
@@ -149,9 +149,9 @@ int main( int argc, const char** argv )
 	int per=15;
 
 	//多线程
-	int list_num=5;
-	int thread_num=5;
-	double ratio=150/9.15;
+	int list_num=6;
+	int thread_num=6;
+	double ratio=150/9.35;
 	trackThread track_thread(rate, ratio, per, HOG, FIXEDWINDOW, MULTISCALE, LAB);
 
 	//计算效率
@@ -165,6 +165,7 @@ int main( int argc, const char** argv )
 		//读入一帧图像
 		if(capture_flag == 1){
 			capture >> pre_frame;
+			ratio=1;
 		}else if(capture_flag == 2){
 			video_capture.read(pre_frame);
 		}else if(capture_flag == 3){
@@ -179,7 +180,7 @@ int main( int argc, const char** argv )
 		if( !pre_frame.empty())
 		{
 			//如果太大，将图片变小
-			//resize(pre_frame, pre_frame, Size(), 0.4, 0.4);
+			resize(pre_frame, pre_frame, Size(), 0.8, 0.8);
 			imshow("原视频",pre_frame);
 			cout<<"这是第"<<current_frame<<"帧"<<endl;
 			if(debug) {
@@ -190,11 +191,10 @@ int main( int argc, const char** argv )
 			pre_frame.copyTo(image);
 
 			//图像预处理
-			GaussianBlur(image,image,cv::Size(0,0), 3, 0, 0);//高斯滤波
+			GaussianBlur(image,image,cv::Size(0,0), 2, 0, 0);//高斯滤波
 			cvtColor(image, image_gray, CV_BGR2GRAY);//获取灰度图image_gray,单通道图像
 			//equalizeHist(image_gray,image_gray);//直方图均衡化
 			//imshow("equalizeHist_gray",image_gray);
-
 
 			if(current_frame == 1){//如果是第一帧，需要申请内存，并初始化    
 				image_gray.convertTo(background_gray,CV_32F); //第一帧作为背景图
@@ -210,11 +210,17 @@ int main( int argc, const char** argv )
 			if(current_frame%per==3){
 				if(debug) cout<<"帧差法检测"<<endl;
 				image3=image_gray.clone();//获取第三张图
-
-				Mat detection_image = frame3_diff_motion_detection(image1,image2,image3,background_gray);//运动检测,返回跟踪区域
-				Mat segment_image = motion_segment(pre_frame);
-				vector<Rect> track_rect=get_track_selection_many(detection_image,segment_image);
-				//vector<Rect> track_rect=get_track_selection_many_by_detection(segment_image);//获得追踪的区域
+				Mat detection_image;
+				Mat segment_image;
+				vector<Rect> track_rect;
+				if(capture_flag == 1){
+					detection_image = frame3_diff_motion_detection(image1,image2,image3,background_gray);//运动检测,返回跟踪区域
+					track_rect=get_track_selection_all(detection_image);//获得追踪的区域
+				}else {
+					detection_image = frame3_diff_motion_detection(image1,image2,image3,background_gray);//运动检测,返回跟踪区域
+					segment_image = motion_segment(pre_frame);
+					track_rect=get_track_selection_many(detection_image,segment_image);
+				}
 				track_num=track_rect.size();
 				if(track_num>0){
 					track_thread.update(track_rect,image);//跟新跟踪器
@@ -222,6 +228,7 @@ int main( int argc, const char** argv )
 
 				detection_time=clock();
 			}
+
 
 
 			/*
@@ -243,6 +250,9 @@ int main( int argc, const char** argv )
 
 			}
 			*/
+
+
+
 			/*****************************运动跟踪**********************/
 			//track_num是需要追踪的总数，thread_num是线程总数
 			int count_track=track_num;//计算已经追踪的窗口数
@@ -250,7 +260,7 @@ int main( int argc, const char** argv )
 
 			while(count_track>0){
 				//每次执行thread_num个
-				thread threads[5];
+				thread threads[6];
 				for(int t=0;t<thread_num;t++){
 					threads[t]=thread(run_thread,ref(track_thread));
 				}
@@ -302,18 +312,19 @@ int main( int argc, const char** argv )
 			total_track_duration+=tracking_duration;
 
 
-
+			/*
 			++cal_count;
 			if(cal_count==100){
-				total_track_duration=total_track_duration/cal_count;
-				total_detection_duration=total_detection_duration/7;
-				cout <<current_frame<<"帧"<< "total_track_duration" << total_track_duration<<endl;
-				cout <<current_frame<<"帧"<< "total_detection_duration=" << total_detection_duration<<endl;
-				cal_count=0;
-				total_track_duration=0;
-				total_detection_duration=0;
-				getchar();
+			total_track_duration=total_track_duration/cal_count;
+			total_detection_duration=total_detection_duration/7;
+			cout <<current_frame<<"帧"<< "total_track_duration" << total_track_duration<<endl;
+			cout <<current_frame<<"帧"<< "total_detection_duration=" << total_detection_duration<<endl;
+			cal_count=0;
+			total_track_duration=0;
+			total_detection_duration=0;
+			getchar();
 			}
+			*/
 
 			++current_frame;//图片数+1
 
@@ -327,7 +338,7 @@ int main( int argc, const char** argv )
 			}
 			finish = clock();
 
-			
+
 		}
 
 
