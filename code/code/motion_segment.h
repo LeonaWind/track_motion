@@ -17,35 +17,12 @@ vector<Rect> get_track_selection_many_simple(Mat image);
 
 class WatershedSegmenter {
   private:
-	  Mat markers;
+	  Mat markers;//标记图，水淹过程就是从这组预先定义好的标记像素开始
   public:
-	  void setMarkers(const Mat& markerImage) {
-		// Convert to image of ints
-		markerImage.convertTo(markers,CV_32S);
-	  }
-
-	  Mat process(const Mat &image){
-		// Apply watershed
-		watershed(image,markers);
-		return markers;
-	  }
-
-	  // Return result in the form of an image
-	  Mat getSegmentation(){
-		Mat tmp;
-		// all segment with label higher than 255
-		// will be assigned value 255
-		markers.convertTo(tmp,CV_8U);
-		return tmp;
-	  }
-
-	  // Return watershed in the form of an image以图像的形式返回分水岭
-	  Mat getWatersheds(){
-		Mat tmp;
-		//在变换前，把每个像素p转换为255p+255（在conertTo中实现）
-		markers.convertTo(tmp,CV_8U,255,255);
-		return tmp;
-	  }
+	  void setMarkers(const Mat& markerImage);//设置初始化的标记图像
+	  Mat process(const Mat &image);//对图片进行分水岭算法分割
+	  Mat getSegmentation();//返回分割后的图像
+	  Mat getWatersheds();//以图像的形式返回分水岭
 };
 
 #endif

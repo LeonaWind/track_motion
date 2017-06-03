@@ -1,4 +1,11 @@
+/*
+文件名:motion_segment.cpp
+作者:甘晓蓉 
+编写日期:2017-5
+文件描述:轮廓分割模块，包含对图像进行物体轮廓分割时使用的函数
+*/
 #include"motion_segment.h"
+
 extern bool debug;
 
 //-------------------------------------------------------------------------------------------------
@@ -88,25 +95,25 @@ vector<Rect> icvprCcaBySeedFill(Mat& con_image,Mat& label_image)
 				++label;
 				while (!neighborPixels.empty())  {  
 					std::pair<int,int> curPixel = neighborPixels.top() ;  
-					int cur_pixel_x = curPixel.first ;  
-					int cur_pixel_y = curPixel.second ;  
-					label_image.at<int>(cur_pixel_x, cur_pixel_y) = label ;  
+					int cur_x = curPixel.first ;  
+					int cur_y = curPixel.second ;  
+					label_image.at<int>(cur_x, cur_y) = label ;  
 					neighborPixels.pop() ;  
 
-					if(cur_pixel_x==0||cur_pixel_y==0||cur_pixel_x==rows||cur_pixel_y==cols) continue;
+					if(cur_x==0||cur_y==0||cur_x==rows||cur_y==cols) continue;
 
 					//将相邻的前景像素点入栈
-					if (label_image.at<int>(cur_pixel_x, cur_pixel_y-1) == sign){//左像素点 
-						neighborPixels.push(std::pair<int,int>(cur_pixel_x, cur_pixel_y-1)) ;  
+					if (label_image.at<int>(cur_x, cur_y-1) == sign){//左像素
+						neighborPixels.push(std::pair<int,int>(cur_x, cur_y-1)) ;  
 					}  
-					if (label_image.at<int>(cur_pixel_x, cur_pixel_y+1) == sign){//右像素点 
-						neighborPixels.push(std::pair<int,int>(cur_pixel_x, cur_pixel_y+1)) ;  
+					if (label_image.at<int>(cur_x, cur_y+1) == sign){//右像素
+						neighborPixels.push(std::pair<int,int>(cur_x, cur_y+1)) ;  
 					}  
-					if (label_image.at<int>(cur_pixel_x-1, cur_pixel_y) == sign){//上像素点 
-						neighborPixels.push(std::pair<int,int>(cur_pixel_x-1, cur_pixel_y)) ;  
+					if (label_image.at<int>(cur_x-1, cur_y) == sign){//上像素
+						neighborPixels.push(std::pair<int,int>(cur_x-1, cur_y)) ;  
 					}  
-					if (label_image.at<int>(cur_pixel_x+1, cur_pixel_y) == sign){//下像素点 
-						neighborPixels.push(std::pair<int,int>(cur_pixel_x+1, cur_pixel_y)) ;  
+					if (label_image.at<int>(cur_x+1, cur_y) == sign){//下像素
+						neighborPixels.push(std::pair<int,int>(cur_x+1, cur_y)) ;  
 					}  
 				}         
 			}  
@@ -177,7 +184,7 @@ vector<Rect> get_track_selection_many(Mat detection_image,Mat segment_image){
 			}
 		}
 	} 
-	
+
 	//若有需要，就进行形态学运算
 	Mat element=getStructuringElement(MORPH_RECT,Size(15,15));
 	morphologyEx(inter,inter,MORPH_CLOSE,element);
@@ -203,4 +210,51 @@ vector<Rect> get_track_selection_many_simple(Mat image){
 	vector<Rect> track_rect;
 	track_rect=icvprCcaBySeedFill(image,label);
 	return track_rect;
+}
+
+//-------------------------------------------------------------------------------------------------
+// function:setMarkers
+// brief:WatershedSegmenter类中方法，设置初始化的标记图像
+// parameter:初始标记图const Mat& markerImage
+// return:无
+//-------------------------------------------------------------------------------------------------
+void WatershedSegmenter::setMarkers(const Mat& markerImage) {
+	markerImage.convertTo(markers,CV_32S);
+}
+
+//-------------------------------------------------------------------------------------------------
+// function:process
+// brief:WatershedSegmenter类中方法，对图片进行分水岭算法分割
+// parameter:const Mat &image
+// return:分割结果Mat markers
+//-------------------------------------------------------------------------------------------------
+Mat WatershedSegmenter::process(const Mat &image){
+	watershed(image,markers);//调用OpenCV中的watershed实现分水岭算法
+	return markers;
+}
+
+//-------------------------------------------------------------------------------------------------
+// function:getSegmentation
+// brief:WatershedSegmenter类中方法，返回分割后的图像
+// parameter:无
+// return:分割后的图像Mat temp
+//-------------------------------------------------------------------------------------------------
+Mat WatershedSegmenter::getSegmentation(){
+	Mat temp;
+	//分割结果中所有高于255的值都会被赋值为255
+	markers.convertTo(temp,CV_8U);
+	return temp;
+}
+
+//-------------------------------------------------------------------------------------------------
+// function:getWatersheds
+// brief:WatershedSegmenter类中方法，以图像的形式返回分水岭
+// parameter:无
+// return:分割后的图像Mat temp
+//-------------------------------------------------------------------------------------------------
+Mat WatershedSegmenter::getWatersheds(){
+	Mat temp;
+	//在变换前，把每个像素p转换为255p+255（在conertTo中实现）
+	markers.convertTo(temp,CV_8U,255,255);
+	return temp;
 }

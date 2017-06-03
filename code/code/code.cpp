@@ -1,3 +1,10 @@
+/*
+文件名:code.cpp
+作者:甘晓蓉 
+编写日期:2017-5
+文件描述:程序运行的主函数，读取视频源后进行运动检测和跟踪
+*/
+
 #include <opencv.hpp>
 #include <iostream>
 #include <stdlib.h>
@@ -50,25 +57,19 @@ int main( int argc, const char** argv )
 	//运动检测速度
 	int per=15;
 
-	//多线程
-	int list_num=6;
-	int thread_num=6;
-	double ratio=150/9.35;
-	trackThread track_thread(rate, ratio, per, HOG, FIXEDWINDOW, MULTISCALE, LAB);
+	
 
 	//计算效率
 	double total_track_duration,total_detection_duration;
 	int cal_count=0;
 
 	cout<<"***************请输入您的选择*****************"<<endl;
-	//cout<<"1--打开电脑摄像头"<<endl;
-	//cout<<"2--打开测试视频"<<endl;
-	cout<<"打开测试视频"<<endl;
-	//cout<<"其他键--退出"<<endl;
+	cout<<"1--打开电脑摄像头"<<endl;
+	cout<<"2--打开测试视频"<<endl;
+	cout<<"其他键--退出"<<endl;
 	cout<<"**********************************************"<<endl;
-	//choice=getchar();
-	//getchar();
-	choice='2';
+	choice=getchar();
+	getchar();
 
 	cout<<"******************运动跟踪方法*****************"<<endl;
 	cout<<"KCF"<<endl;
@@ -123,13 +124,11 @@ int main( int argc, const char** argv )
 		cout<<"**********************************************"<<endl;
 	}
 
-	//打开测试相片序列
-	string pic_path="G:\\毕设\\data\\Biker\\img\\";
-	int max_pic=175;
-	if(capture_flag == 3){
-		delay = 1;//两帧间的间隔时间:
-		current_frame = 1;
-	}
+	//多线程
+	int list_num=6;
+	int thread_num=6;
+	double ratio=150/9.35;
+	trackThread track_thread(rate, ratio, HOG, FIXEDWINDOW, MULTISCALE, LAB);
 
 	while(1)
 	{
@@ -140,13 +139,6 @@ int main( int argc, const char** argv )
 			ratio=1;
 		}else if(capture_flag == 2){
 			video_capture.read(pre_frame);
-		}else if(capture_flag == 3){
-			if(current_frame>max_pic) return -1;
-			char s[10];
-			sprintf(s,"%0.4d",current_frame);
-			String pic_path_temp=pic_path+s+".jpg";
-			if(debug) cout<<"pic_path_temp:"<<pic_path_temp<<endl;
-			pre_frame = imread(pic_path_temp);
 		}
 
 		if( !pre_frame.empty())

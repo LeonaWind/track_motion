@@ -72,3 +72,20 @@ RotatedRect meanshift_motion_tracking(Rect &track_window,Mat image){
 		return trackBox;
 	}
 }
+
+////打开测试相片序列
+//	string pic_path="G:\\毕设\\data\\Biker\\img\\";
+//	int max_pic=175;
+//	if(capture_flag == 3){
+//		delay = 1;//两帧间的间隔时间:
+//		current_frame = 1;
+//	}
+//
+//	else if(capture_flag == 3){
+//			if(current_frame>max_pic) return -1;
+//			char s[10];
+//			sprintf(s,"%0.4d",current_frame);
+//			String pic_path_temp=pic_path+s+".jpg";
+//			if(debug) cout<<"pic_path_temp:"<<pic_path_temp<<endl;
+//			pre_frame = imread(pic_path_temp);
+//		}

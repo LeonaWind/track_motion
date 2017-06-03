@@ -1,10 +1,16 @@
+/*
+文件名:motion_detection.cpp
+作者:甘晓蓉 
+编写日期:2017-5
+文件描述:运动检测模块，包含运动检测中使用的函数
+*/
 #include"motion_detection.h"
 
 extern bool debug;
 
 //-------------------------------------------------------------------------------------------------
 // function: frame3_diff_motion_detection
-// brief: 改进三帧差法检测运动物体
+// brief: 改进三帧差法结合背景差分法检测运动物体
 // parameter:第k-1帧图像Mat image_gray_pre，第k帧图像Mat image_gray，第k+1帧图像Mat image_gray_next
 //			背景图像background_gray_cv32f
 // return: 运动检测结果图像Mat output,运动像素值为255，背景像素值为0
