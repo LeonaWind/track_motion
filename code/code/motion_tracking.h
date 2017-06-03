@@ -19,7 +19,7 @@ extern int vmax;
 extern int smin;
 extern bool debug;
 
-RotatedRect motion_tracking(Rect &track_window,Mat image);//运动追踪
+//RotatedRect motion_tracking(Rect &track_window,Mat image);//运动追踪
 float get_distance(Point result_point,Point old_point);
 
 class trackThread {

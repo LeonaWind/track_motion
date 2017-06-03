@@ -6,7 +6,8 @@ extern bool debug;
 // function: frame3_diff_motion_detection
 // brief: 改进三帧差法检测运动物体
 // parameter:第k-1帧图像Mat image_gray_pre，第k帧图像Mat image_gray，第k+1帧图像Mat image_gray_next
-// return: 被跟踪区域Rect selection
+//			背景图像background_gray_cv32f
+// return: 运动检测结果图像Mat output,运动像素值为255，背景像素值为0
 //-------------------------------------------------------------------------------------------------
 Mat frame3_diff_motion_detection(Mat image_gray_pre,Mat image_gray,Mat image_gray_next,Mat &background_gray_cv32f){
 	int rows=image_gray.rows;
@@ -30,7 +31,6 @@ Mat frame3_diff_motion_detection(Mat image_gray_pre,Mat image_gray,Mat image_gra
 			}else{
 				diff_gray.at<uchar>(i,j) = 0;
 			}
-			//cout<<(int)diff_gray.at<uchar>(i,j)<<" ";
 		}    
 	} 
 	if(debug) imshow("差分结果",diff_gray);
@@ -40,10 +40,8 @@ Mat frame3_diff_motion_detection(Mat image_gray_pre,Mat image_gray,Mat image_gra
 	Mat element(6,6,CV_8U,Scalar(1));
 	morphologyEx(diff_gray,diff_gray,MORPH_CLOSE,element);
 	if(debug) imshow("形态学处理结果",diff_gray);
-	waitKey(30);
-	//imshow("形态学处理结果",diff_gray);
 
-	/*//4.第k帧背景建模
+	//4.第k帧背景建模
 	Mat background_diff_gray(rows,cols,CV_8UC1);//当前图与背景图的差异
 	Mat background_gray_cv8u;//CV_8U格式背景图 
 	double learningRate=0.8;//学习率
@@ -52,9 +50,6 @@ Mat frame3_diff_motion_detection(Mat image_gray_pre,Mat image_gray,Mat image_gra
 	absdiff(image_gray, background_gray_cv8u, background_diff_gray);//当前帧跟背景图相减  
 	threshold(background_diff_gray, background_diff_gray, 40, 255.0, CV_THRESH_BINARY);//二值化前景图
 	accumulateWeighted (image_gray,background_gray_cv32f,learningRate,background_diff_gray);//更新背景，output作为掩码
-
-	//imshow("background_diff_gray",background_diff_gray);
-	*/
 
 	//5.第k帧canny边缘检测
 	Mat image_gray_canny;
@@ -66,56 +61,25 @@ Mat frame3_diff_motion_detection(Mat image_gray_pre,Mat image_gray,Mat image_gra
 	mat_and(diff_gray,image_gray_canny,diff_gray);
 
 	//7.与运算结果与背景建模结果进行或运算
-	//mat_or(diff_gray,background_diff_gray,output);
+	mat_or(diff_gray,background_diff_gray,output);
 
 	//8.形态学处理
 	Mat element1(5,5,CV_8U,Scalar(1));
-	morphologyEx(diff_gray,output,MORPH_CLOSE,element1);
-	if(debug) imshow("运动检测最后结果",output);
-	waitKey(30);
+	morphologyEx(output,output,MORPH_CLOSE,element1);
+	if(debug){
+		imshow("运动检测最后结果",output);
+		waitKey(30);
+	}
 
-	//imshow("image_gray_canny",image_gray_canny);
-	//imshow("diff_gray",diff_gray);
-	//Rect selection = get_track_selection_all(output); //简单做法获取追踪区域
-	//return selection;
-
-	return output;
-
-
+	return output;//返回运动检测结果图像，运动像素值为255，背景像素值为0
 }
 
-//-------------------------------------------------------------------------------------------------
-// function: background_motion_detection
-// brief: 背景减法检测运动物体
-// parameter:当前图像Mat image，当前图像灰度图Mat image_gray，CV_32F背景图像灰度图Mat background_gray
-// return: 被跟踪区域Rect selection
-//-------------------------------------------------------------------------------------------------
-Mat background_motion_detection(Mat &image_gray,Mat &background_gray_cv32f){
-	Mat diff_gray;//当前图与背景图的差异
-	Mat output;//检测出的运动图像
-	double learningRate=0.2;//学习率
-	Mat background_gray_cv8u;//CV_8U格式背景图 
-	background_gray_cv32f.convertTo (background_gray_cv8u,CV_8U);
-
-	absdiff(image_gray, background_gray_cv8u, diff_gray);//当前帧跟背景图相减  
-	threshold(diff_gray, output, 70, 255.0, CV_THRESH_BINARY);//二值化前景图
-	accumulateWeighted (image_gray,background_gray_cv32f,learningRate,output);//更新背景，output作为掩码
-
-	//imshow("foreground",output);
-	//imshow("image_gray",image_gray);
-	//imshow("background", background_gray_cv8u); 
-
-	imshow("output",output);
-	waitKey(30);
-	return output;
-
-}
 
 //-------------------------------------------------------------------------------------------------
 // function: get_track_selection_all
 // brief: 获取追踪区域,简单做法：把所有运动的点放在一个大矩形内
 // parameter:输入图像Mat image
-// return: 被跟踪区域Rect selection
+// return: 被跟踪区域vector<Rect> result
 //-------------------------------------------------------------------------------------------------
 vector<Rect> get_track_selection_all(Mat &image){
 
@@ -297,31 +261,6 @@ Rect get_track_selection(Mat &image)
 	return rect;
 }  
 
-
-Rect rectA_intersect_rectB(Rect rectA, Rect rectB){
-	float start_min_x=min(rectA.x,rectB.x);
-	float start_max_x=max(rectA.x,rectB.x);
-	float start_min_y=min(rectA.y,rectB.y);
-	float start_max_y=max(rectA.y,rectB.y);
-
-	float end_min_x=min(rectA.x+rectA.width,rectB.x+rectB.width);
-	float end_max_x=max(rectA.x+rectA.width,rectB.x+rectB.width);
-	float end_min_y=min(rectA.y+rectA.height,rectB.y+rectB.height);
-	float end_max_y=max(rectA.y+rectA.height,rectB.y+rectB.height);
-
-	Rect result;
-
-	if(end_min_x<start_max_x||end_min_y<start_max_y){
-		return rectA;
-	}
-
-	result.x=start_max_x;
-	result.y=start_max_y;
-	result.width=end_min_x-start_max_x;
-	result.height=end_min_y-start_max_y;
-
-	return result;
-}
 
 //-------------------------------------------------------------------------------------------------
 // function: mat_and

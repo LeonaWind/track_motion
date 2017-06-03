@@ -14,52 +14,65 @@
 using namespace cv;
 using namespace std;
 
-int vmin = 10;
-int vmax = 256;
-int smin = 60;
+
 bool debug=false;
 int track_num=0;//追踪的窗口数
-mutex m;//互斥量
-
-const char* keys =
-{
-	"{1|  | 0 | camera number}"
-};
-
 
 int main( int argc, const char** argv )
 {
 	Rect track_window;//跟踪的区域
-	char choice,tracking_choice;
+	char choice;
 	int capture_flag=0,tracking_flag=0;
 	int delay=0;
 	int current_frame = 0;//计算当前为第几帧
-	clock_t start, finish,detection_time,tracking_time,total_start,total_finish;//用于计算时间复杂度
+	clock_t start, finish,detection_time,tracking_time;//用于计算时间复杂度
 	double duration,detection_duration,tracking_duration,total_duration;
 	double rate = 100;//帧率
+	const char* keys ={"{1|  | 0 | camera number}"};
+		Mat pre_frame, cur_frame;//读取的帧
+	Mat pre_gray,cur_gray;
+	int nFrmNum = 0;//读取的帧数
+	bool paused = false;
+	Mat image,background_image;//当前处理图像，背景图
+	Mat image1, image2, image3;//改进三帧差法检测运动物体时存储的三帧图像
+	Mat image_gray,background_gray;//当前处理图像，背景图的灰度图
 
-	//截屏
-	//int sframe1=5,sframe2=90,sframe3=900;//倒车入库
-	//int sframe1=6,sframe2=80,sframe3=150;//花样滑冰
-	//int sframe1=6,sframe2=72,sframe3=140;//骑自行车
+	//KCFT方法
+	bool HOG = true;
+	bool FIXEDWINDOW = false;
+	bool MULTISCALE = true;
+	bool SILENT = true;
+	bool LAB = false;
+	//KCFTracker tracker(HOG, FIXEDWINDOW, MULTISCALE, LAB);
+	// Tracker results
+	Rect result;
+
+	//运动检测速度
+	int per=15;
+
+	//多线程
+	int list_num=6;
+	int thread_num=6;
+	double ratio=150/9.35;
+	trackThread track_thread(rate, ratio, per, HOG, FIXEDWINDOW, MULTISCALE, LAB);
+
+	//计算效率
+	double total_track_duration,total_detection_duration;
+	int cal_count=0;
 
 	cout<<"***************请输入您的选择*****************"<<endl;
-	cout<<"1--打开电脑摄像头"<<endl;
-	cout<<"2--打开测试视频"<<endl;
-	cout<<"其他键--退出"<<endl;
+	//cout<<"1--打开电脑摄像头"<<endl;
+	//cout<<"2--打开测试视频"<<endl;
+	cout<<"打开测试视频"<<endl;
+	//cout<<"其他键--退出"<<endl;
 	cout<<"**********************************************"<<endl;
-	choice=getchar();
-	getchar();
-	//choice='2';
-
-	cout<<"***************请选择运动跟踪方法*****************"<<endl;
-	//cout<<"1--CamShift"<<endl;
-	cout<<"KCF"<<endl;
-	cout<<"其他键--退出"<<endl;
-	cout<<"**********************************************"<<endl;
-	//tracking_choice=getchar();
+	//choice=getchar();
 	//getchar();
-	tracking_choice='2';
+	choice='2';
+
+	cout<<"******************运动跟踪方法*****************"<<endl;
+	cout<<"KCF"<<endl;
+	cout<<"**********************************************"<<endl;
 
 	if(choice == '1'){
 		capture_flag=1;
@@ -72,15 +85,7 @@ int main( int argc, const char** argv )
 		return -1;
 	}
 
-	if(tracking_choice == '1'){
-		tracking_flag=1;
-	}else if(tracking_choice == '2'){
-		tracking_flag=2;
-	}else{
-		cout<<"退出"<<endl;
-		return -1;
-	}
-
+	/*****************************打开数据*************************/
 	//打开摄像头
 	VideoCapture capture;
 	CommandLineParser parser(argc, argv, keys);
@@ -126,43 +131,10 @@ int main( int argc, const char** argv )
 		current_frame = 1;
 	}
 
-	Mat pre_frame, cur_frame;//读取的帧
-	Mat pre_gray,cur_gray;
-	int nFrmNum = 0;//读取的帧数
-	bool paused = false;
-	Mat image,background_image;//当前处理图像，背景图
-	Mat image1, image2, image3;//改进三帧差法检测运动物体时存储的三帧图像
-	Mat image_gray,background_gray;//当前处理图像，背景图的灰度图
-	RotatedRect trackBox;//camshift追踪结果
-
-	//KCFT方法
-	bool HOG = true;
-	bool FIXEDWINDOW = false;
-	bool MULTISCALE = true;
-	bool SILENT = true;
-	bool LAB = false;
-	//KCFTracker tracker(HOG, FIXEDWINDOW, MULTISCALE, LAB);
-	// Tracker results
-	Rect result;
-
-	//测量速度
-	int per=15;
-
-	//多线程
-	int list_num=6;
-	int thread_num=6;
-	double ratio=150/9.35;
-	trackThread track_thread(rate, ratio, per, HOG, FIXEDWINDOW, MULTISCALE, LAB);
-
-	//计算效率
-	double total_track_duration,total_detection_duration;
-	int cal_count=0;
-
-	total_start = clock();
 	while(1)
 	{
 		start = clock();
-		//读入一帧图像
+		/*****************************读取一帧*************************/
 		if(capture_flag == 1){
 			capture >> pre_frame;
 			ratio=1;
@@ -180,7 +152,7 @@ int main( int argc, const char** argv )
 		if( !pre_frame.empty())
 		{
 			//如果太大，将图片变小
-			resize(pre_frame, pre_frame, Size(), 0.8, 0.8);
+			//resize(pre_frame, pre_frame, Size(), 0.8, 0.8);
 			imshow("原视频",pre_frame);
 			cout<<"这是第"<<current_frame<<"帧"<<endl;
 			if(debug) {
@@ -190,12 +162,11 @@ int main( int argc, const char** argv )
 
 			pre_frame.copyTo(image);
 
-			//图像预处理
+			/*****************************图像预处理************************/
 			GaussianBlur(image,image,cv::Size(0,0), 2, 0, 0);//高斯滤波
 			cvtColor(image, image_gray, CV_BGR2GRAY);//获取灰度图image_gray,单通道图像
-			//equalizeHist(image_gray,image_gray);//直方图均衡化
-			//imshow("equalizeHist_gray",image_gray);
 
+			/*****************************运动检测*************************/
 			if(current_frame == 1){//如果是第一帧，需要申请内存，并初始化    
 				image_gray.convertTo(background_gray,CV_32F); //第一帧作为背景图
 			}
@@ -229,31 +200,7 @@ int main( int argc, const char** argv )
 				detection_time=clock();
 			}
 
-
-
-			/*
-			//背景建模法
-			if(current_frame == 1) { 
-			//转化成单通道图像再处理   
-			cvtColor(image, image_gray, CV_BGR2GRAY); 
-			image_gray.convertTo(background_gray,CV_32F); 
-			}else if(current_frame%per==3){
-			cvtColor(image, image_gray, CV_BGR2GRAY);//变为灰度图 
-			Mat detection_image=background_motion_detection(image_gray,background_gray);//运动检测,返回跟踪区域
-			vector<Rect> track_rect=get_track_selection_many_by_detection(detection_image);//获得追踪的区域
-			track_num=track_rect.size();
-			if(track_num>0){
-			track_thread.update(track_rect,image);//跟新跟踪器
-			}
-
-			detection_time=clock();
-
-			}
-			*/
-
-
-
-			/*****************************运动跟踪**********************/
+			/*****************************运动跟踪*************************/
 			//track_num是需要追踪的总数，thread_num是线程总数
 			int count_track=track_num;//计算已经追踪的窗口数
 			track_thread.update_image(image,pre_frame,current_frame);//跟新图片
@@ -271,25 +218,10 @@ int main( int argc, const char** argv )
 			}
 
 			track_thread.set_list();//更新
-
-			/*
-			if(current_frame>3){
-			if(tracking_flag == 1){//camshift运动追踪 
-			trackBox=motion_tracking(track_window,image);
-			ellipse( pre_frame, trackBox, Scalar(255,0,0), 3, CV_AA );
-			imshow( "camshift运动跟踪结果", pre_frame );
-			if(debug)cout<<"track_window"<<track_window<<endl;
-			}else if(tracking_flag == 2){//KCF运动跟踪
-			result = tracker.update(image);
-			rectangle(pre_frame, Point(result.x, result.y), Point(result.x + result.width, result.y + result.height), Scalar(0, 255, 255), 1, 8);
-			imshow( "KCF运动跟踪结果", pre_frame );
-			}
-			}
-			*/
-
 			tracking_time=clock();
 
-			duration = (double)(finish - start) / CLOCKS_PER_SEC; //计算效率
+			/*****************************计算效率*************************/
+			duration = (double)(finish - start) / CLOCKS_PER_SEC;
 			if(detection_time>start){
 				if(current_frame%per==3){
 					detection_duration=(double)(detection_time - start) / CLOCKS_PER_SEC;
@@ -310,25 +242,9 @@ int main( int argc, const char** argv )
 
 			total_detection_duration+=detection_duration;
 			total_track_duration+=tracking_duration;
-
-
-			/*
-			++cal_count;
-			if(cal_count==100){
-			total_track_duration=total_track_duration/cal_count;
-			total_detection_duration=total_detection_duration/7;
-			cout <<current_frame<<"帧"<< "total_track_duration" << total_track_duration<<endl;
-			cout <<current_frame<<"帧"<< "total_detection_duration=" << total_detection_duration<<endl;
-			cal_count=0;
-			total_track_duration=0;
-			total_detection_duration=0;
-			getchar();
-			}
-			*/
-
 			++current_frame;//图片数+1
 
-			//读取键盘输入操作
+			/***************************读取键盘输入操作***********************/
 			char c = (char)waitKey(delay);
 			if( c == 27 ||(current_frame >= total_frame_num-1&&total_frame_num>0))
 				break;
@@ -337,26 +253,11 @@ int main( int argc, const char** argv )
 				break;
 			}
 			finish = clock();
-
-
 		}
-
-
-
-		//截图
-		//if(current_frame ==sframe1||current_frame ==sframe2||current_frame ==sframe3){
-		//	cout<<"截图"<<endl;
-		//	getchar(); 
-		//}
-
 	}
 
 
-	total_finish = clock();
-	total_duration = (double)(total_finish - total_start) / CLOCKS_PER_SEC; //计算效率
-	cout << "total_duration" << total_duration<<endl;
-
-	//释放资源
+	/*****************************释放资源*************************/
 	capture.release();
 	video_capture.release();
 

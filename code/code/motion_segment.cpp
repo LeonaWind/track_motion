@@ -1,7 +1,12 @@
 #include"motion_segment.h"
 extern bool debug;
 
-//物体分割
+//-------------------------------------------------------------------------------------------------
+// function: motion_segment
+// brief:运用分水岭算法检测出图像中各物体的轮廓
+// parameter:待分割图像Mat image
+// return:图像分割结果Mat output,前景像素值为255，背景像素值为0
+//-------------------------------------------------------------------------------------------------
 Mat motion_segment(Mat image){
 	Mat result;
 	int rows=image.rows;
@@ -32,10 +37,6 @@ Mat motion_segment(Mat image){
 	//morphologyEx(binary, fg1,MORPH_CLOSE,element5,Point(-1,-1),1);// 闭运算填充物体内细小空洞、连接邻近物体
 	morphologyEx(binary, fg1,MORPH_CLOSE,element5);
 
-	// Display the foreground image
-	//namedWindow("Foreground Image");
-	//imshow("Foreground Image",fg1);
-	//waitKey();
 
 	// Identify image pixels without objects
 
