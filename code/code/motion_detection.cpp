@@ -42,7 +42,7 @@ Mat frame3_diff_motion_detection(Mat image_gray_pre,Mat image_gray,Mat image_gra
 	if(debug) imshow("形态学处理结果",diff_gray);
 
 	//4.第k帧背景建模
-	Mat background_diff_gray(rows,cols,CV_8UC1);//当前图与背景图的差异
+	/*Mat background_diff_gray(rows,cols,CV_8UC1);//当前图与背景图的差异
 	Mat background_gray_cv8u;//CV_8U格式背景图 
 	double learningRate=0.8;//学习率
 	background_gray_cv32f.convertTo (background_gray_cv8u,CV_8U);
@@ -50,18 +50,18 @@ Mat frame3_diff_motion_detection(Mat image_gray_pre,Mat image_gray,Mat image_gra
 	absdiff(image_gray, background_gray_cv8u, background_diff_gray);//当前帧跟背景图相减  
 	threshold(background_diff_gray, background_diff_gray, 40, 255.0, CV_THRESH_BINARY);//二值化前景图
 	accumulateWeighted (image_gray,background_gray_cv32f,learningRate,background_diff_gray);//更新背景，output作为掩码
+	*/
 
 	//5.第k帧canny边缘检测
 	Mat image_gray_canny;
 	Canny(image_gray, image_gray_canny, 3, 9, 3);
-	if(debug) imshow("image_gray_canny",image_gray_canny);
-	waitKey(30);
 
 	//6.第k帧边缘检测结果与帧差法结果进行与运算
 	mat_and(diff_gray,image_gray_canny,diff_gray);
 
 	//7.与运算结果与背景建模结果进行或运算
-	mat_or(diff_gray,background_diff_gray,output);
+	//mat_or(diff_gray,background_diff_gray,output);
+	output=diff_gray;
 
 	//8.形态学处理
 	Mat element1(5,5,CV_8U,Scalar(1));

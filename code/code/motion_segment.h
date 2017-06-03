@@ -13,7 +13,7 @@ using namespace std;
 Mat motion_segment(Mat image);//ÎïÌå·Ö¸î
 vector<Rect> icvprCcaBySeedFill(Mat& _binImg,Mat& _lableImg);
 vector<Rect> get_track_selection_many(Mat detection_image,Mat segment_image);
-vector<Rect> get_track_selection_many_by_detection(Mat detection_image);
+vector<Rect> get_track_selection_many_simple(Mat image);
 
 class WatershedSegmenter {
   private:
