@@ -73,7 +73,7 @@ Mat frame3_diff_motion_detection(Mat image_gray_pre,Mat image_gray,Mat image_gra
 	Mat element1(5,5,CV_8U,Scalar(1));
 	morphologyEx(output,output,MORPH_CLOSE,element1);
 	if(debug){
-		imshow("运动检测最后结果",output);
+		imshow("运动检测算法结果",output);
 		waitKey(30);
 	}
 

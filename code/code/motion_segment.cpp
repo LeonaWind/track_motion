@@ -145,7 +145,11 @@ vector<Rect> icvprCcaBySeedFill(Mat& con_image,Mat& label_image)
 			rect.y=rect.y-10>0?rect.y-10:0;
 			rect.width=rect.width+10<cols?rect.width+10:cols;
 			rect.height=rect.height+10<rows?rect.height+10:rows;
-			if(rect.area()>150&&rect.area()<10000&&rect.y>40){ 
+			//rect.x=rect.x>0?rect.x:0;
+			//rect.y=rect.y>0?rect.y:0;
+			//rect.width=rect.width<cols?rect.width:cols;
+			//rect.height=rect.height<rows?rect.height:rows;
+			if(rect.area()>150&&rect.area()<10000&&rect.y>40){ //&&rect.y>40
 				rectangle(label_image, cvPoint(rect.x, rect.y), cvPoint(rect.x + rect.width, rect.y + rect.height),CV_RGB(255,255, 255), 1, 8, 0);
 				track_rect.push_back(rect);
 			}
@@ -189,7 +193,7 @@ vector<Rect> get_track_selection_many(Mat detection_image,Mat segment_image){
 	Mat element=getStructuringElement(MORPH_RECT,Size(15,15));
 	morphologyEx(inter,inter,MORPH_CLOSE,element);
 	if(debug) {
-		imshow("inter",inter);
+		imshow("½»¼¯",inter);
 		waitKey(30);
 	}
 

@@ -21,8 +21,7 @@
 using namespace cv;
 using namespace std;
 
-
-bool debug=false;
+bool debug=false;//调试开关
 int track_num=0;//追踪的窗口数
 
 int main( int argc, const char** argv )
@@ -55,9 +54,7 @@ int main( int argc, const char** argv )
 	Rect result;
 
 	//运动检测速度
-	int per=15;
-
-	
+	int per=30;
 
 	//计算效率
 	double total_track_duration,total_detection_duration;
@@ -144,7 +141,7 @@ int main( int argc, const char** argv )
 		if( !pre_frame.empty())
 		{
 			//如果太大，将图片变小
-			//resize(pre_frame, pre_frame, Size(), 0.8, 0.8);
+			//resize(pre_frame, pre_frame, Size(), 0.3, 0.3);
 			imshow("原视频",pre_frame);
 			cout<<"这是第"<<current_frame<<"帧"<<endl;
 			if(debug) {
@@ -157,7 +154,7 @@ int main( int argc, const char** argv )
 			/*****************************图像预处理************************/
 			GaussianBlur(image,image,cv::Size(0,0), 2, 0, 0);//高斯滤波
 			cvtColor(image, image_gray, CV_BGR2GRAY);//获取灰度图image_gray,单通道图像
-
+			if(debug) imshow("预处理结果",image_gray);
 			/*****************************运动检测*************************/
 			if(current_frame == 1){//如果是第一帧，需要申请内存，并初始化    
 				image_gray.convertTo(background_gray,CV_32F); //第一帧作为背景图
@@ -182,7 +179,7 @@ int main( int argc, const char** argv )
 				}else {
 					detection_image = frame3_diff_motion_detection(image1,image2,image3,background_gray);//运动检测,返回跟踪区域
 					segment_image = motion_segment(pre_frame);
-					track_rect=get_track_selection_many(detection_image,segment_image);
+					track_rect= get_track_selection_many(detection_image,segment_image);
 				}
 				track_num=track_rect.size();
 				if(track_num>0){

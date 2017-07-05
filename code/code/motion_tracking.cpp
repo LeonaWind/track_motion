@@ -74,7 +74,7 @@ void trackThread::thread_test(){
 		{//在图中显示速度
 			unique_lock<mutex> lock(pic_mutex);
 			rectangle(origin, Point(result_rect.x, result_rect.y), Point(result_rect.x + result_rect.width, result_rect.y + result_rect.height), Scalar(0, 255, 255), 1, 8);
-			putText(origin,x_string,Point(result_rect.x, result_rect.y),FONT_HERSHEY_SIMPLEX,0.4,Scalar(255,0,0));
+			//putText(origin,x_string,Point(result_rect.x, result_rect.y),FONT_HERSHEY_SIMPLEX,0.4,Scalar(255,0,0));
 		}
 
 		//判断，如果跟踪结果已经到达了边界，就不再跟踪了
@@ -125,6 +125,7 @@ void trackThread::update(vector<Rect> r,Mat pic){
 		//将运动检测结果放入队列
 		for(vector<Rect>::iterator iter = r.begin(); iter != r.end(); iter++){
 			KCFTracker tracker(HOG, FIXEDWINDOW, MULTISCALE, LAB);
+			cout<<(*iter).width*(*iter).height<<endl;
 			if((*iter).width>0&&(*iter).height>0){
 				tracker.init((*iter), pic);
 				list.push(tracker);//放入队列
@@ -205,5 +206,5 @@ void trackThread::set_list(){
 		list.push(e);
 		result.pop();
 	}
-	imshow("result",origin);//显示结果
+	imshow("跟踪结果",origin);//显示结果
 }
